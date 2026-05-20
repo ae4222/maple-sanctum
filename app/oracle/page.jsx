@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 const KOFI_URL = "https://ko-fi.com/witchgarden";
 const KOFI_TIERS = "https://ko-fi.com/witchgarden/tiers";
@@ -56,7 +57,6 @@ function addUsed(key) {
   } catch { return 0; }
 }
 
-// ── API ───────────────────────────────────────────────────────
 async function askMaple(type, payload) {
   const res = await fetch("/api/maple", {
     method:"POST",
@@ -104,21 +104,30 @@ function LimitReached({ type }) {
       <div style={{ fontSize:24, color:"#c9a84c", marginBottom:12, letterSpacing:2, fontFamily:font }}>Daily limit reached</div>
       <div style={{ fontSize:18, color:"#8b7355", lineHeight:1.9, marginBottom:28, fontFamily:font }}>
         You have used your {LIMIT} free {type} readings for today.<br/>
-        Return tomorrow — or join the Coven for unlimited access.
+        Join the Coven for unlimited access — or return tomorrow.
       </div>
-      <a href={KOFI_TIERS} target="_blank" rel="noreferrer" style={{
-        display:"inline-block", background:"#c9a84c", color:"#1a0800",
-        borderRadius:10, padding:"14px 36px",
-        fontSize:17, fontWeight:500, textDecoration:"none", letterSpacing:1, fontFamily:font,
-      }}>
-        ✦ Join the Coven
-      </a>
+      <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>
+        <a href={KOFI_TIERS} target="_blank" rel="noreferrer" style={{
+          display:"inline-block", background:"#c9a84c", color:"#1a0800",
+          borderRadius:10, padding:"14px 28px",
+          fontSize:16, fontWeight:500, textDecoration:"none", letterSpacing:1, fontFamily:font,
+        }}>
+          ✦ Join the Coven
+        </a>
+        <button onClick={() => signIn("google")} style={{
+          background:"none", border:"1px solid #c9a84c55", color:"#c9a84c",
+          borderRadius:10, padding:"14px 28px",
+          fontSize:16, cursor:"pointer", fontFamily:font, letterSpacing:1,
+        }}>
+          Login if you're a member
+        </button>
+      </div>
     </div>
   );
 }
 
 // ── Hero Banner ───────────────────────────────────────────────
-function HeroBanner({ tarotUsed, pendulumUsed }) {
+function HeroBanner({ tarotUsed, pendulumUsed, isMember, session }) {
   return (
     <div style={{
       position:"relative", borderRadius:20, overflow:"hidden",
@@ -129,22 +138,48 @@ function HeroBanner({ tarotUsed, pendulumUsed }) {
         onError={e => e.target.style.display="none"}
       />
       <div style={{ position:"absolute", inset:0, background:"linear-gradient(to right, rgba(10,5,20,0.88) 45%, rgba(10,5,20,0.35))" }}/>
-      <div style={{ position:"relative", zIndex:2, padding:"52px 48px", maxWidth:520, display:"flex", flexDirection:"column", gap:16 }}>
+      <div style={{ position:"relative", zIndex:2, padding:"52px 48px", maxWidth:540, display:"flex", flexDirection:"column", gap:16 }}>
         <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:5, textTransform:"uppercase" }}>Maple's Sanctum</div>
-        <div style={{ fontSize:40, color:"#e8d5c4", lineHeight:1.2, fontFamily:font }}>Ask.<br/>The garden<br/>will answer.</div>
-        <div style={{ fontSize:17, color:"#c9b99488", lineHeight:1.8, fontFamily:font }}>
-          Draw your cards or consult the pendulum.<br/>Maple reads what the cards reveal.
-        </div>
-        <div style={{ fontSize:13, color:"#8b7355", background:"#ffffff08", border:"1px solid #c9a84c22", borderRadius:8, padding:"8px 14px", width:"fit-content" }}>
-          👤 Guest — {tarotUsed}/{LIMIT} tarot · {pendulumUsed}/{LIMIT} pendulum today
-        </div>
+        <div style={{ fontSize:40, color:"#e8d5c4", lineHeight:1.2, fontFamily:font }}>Ask.<br/>The Garden<br/>will answer.</div>
+
+        {/* Status bar */}
+        {session ? (
+          <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+            <div style={{
+              fontSize:13, color: isMember ? "#a8e88a" : "#8b7355",
+              background:"#ffffff08", border:`1px solid ${isMember ? "#a8e88a44" : "#c9a84c22"}`,
+              borderRadius:8, padding:"8px 14px",
+            }}>
+              {isMember ? "✦ Coven Member — unlimited readings" : `👤 ${session.user.name} — ${tarotUsed}/${LIMIT} tarot · ${pendulumUsed}/${LIMIT} pendulum`}
+            </div>
+            <button onClick={() => signOut()} style={{
+              background:"none", border:"none", color:"#8b735566",
+              cursor:"pointer", fontSize:12, fontFamily:font,
+            }}>
+              sign out
+            </button>
+          </div>
+        ) : (
+          <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
+            <div style={{ fontSize:13, color:"#8b7355", background:"#ffffff08", border:"1px solid #c9a84c22", borderRadius:8, padding:"8px 14px" }}>
+              👤 Guest — {tarotUsed}/{LIMIT} tarot · {pendulumUsed}/{LIMIT} pendulum today
+            </div>
+            <button onClick={() => signIn("google")} style={{
+              background:"none", border:"1px solid #c9a84c44", color:"#c9a84c",
+              borderRadius:8, padding:"8px 14px", cursor:"pointer",
+              fontSize:13, fontFamily:font,
+            }}>
+              Login →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // ── Service Card ──────────────────────────────────────────────
-function ServiceCard({ image, emoji, title, desc, cta, onClick, disabled }) {
+function ServiceCard({ image, title, cta, onClick, disabled }) {
   const [hover, setHover] = useState(false);
   return (
     <div onClick={!disabled ? onClick : undefined}
@@ -152,10 +187,10 @@ function ServiceCard({ image, emoji, title, desc, cta, onClick, disabled }) {
       onMouseLeave={() => setHover(false)}
       style={{
         position:"relative", borderRadius:18, overflow:"hidden",
-        minHeight:300, cursor: disabled ? "not-allowed" : "pointer", flex:1, minWidth:260,
+        minHeight:300, cursor: disabled ? "not-allowed" : "pointer",
+        flex:1, minWidth:260,
         border: hover && !disabled ? "1px solid #c9a84c88" : "1px solid #c9a84c22",
         transform: hover && !disabled ? "translateY(-4px)" : "none",
-        boxShadow: hover && !disabled ? "0 16px 48px #c9a84c22" : "0 4px 20px #00000066",
         opacity: disabled ? 0.6 : 1,
         transition:"all .3s",
       }}
@@ -164,16 +199,12 @@ function ServiceCard({ image, emoji, title, desc, cta, onClick, disabled }) {
         style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", zIndex:1 }}
         onError={e => e.target.style.display="none"}
       />
-      <div style={{ position:"absolute", inset:0, zIndex:0, background:"radial-gradient(circle at 50% 30%, #2d1b4e, #0a0514)" }}/>
-      <div style={{ position:"absolute", inset:0, zIndex:2, background:"linear-gradient(to top, rgba(10,5,20,0.95) 40%, rgba(10,5,20,0.2))" }}/>
-      <div style={{ position:"relative", zIndex:3, padding:"28px", height:"100%", display:"flex", flexDirection:"column", justifyContent:"flex-end", gap:10 }}>
-        {disabled && (
-          <div style={{ fontSize:13, color:"#e88a8a", marginBottom:4, fontFamily:font }}>
-            Daily limit reached — come back tomorrow
-          </div>
-        )}
+      <div style={{ position:"absolute", inset:0, zIndex:0, background:"radial-gradient(circle at 50% 30%, #1a0a2e, #050208)" }}/>
+      <div style={{ position:"absolute", inset:0, zIndex:2, background:"linear-gradient(to top, rgba(10,5,20,0.75) 20%, rgba(10,5,20,0.05))" }}/>
+      <div style={{ position:"relative", zIndex:3, padding:"28px", height:"100%", display:"flex", flexDirection:"column", justifyContent:"flex-end" }}>
+        {disabled && <div style={{ fontSize:13, color:"#e88a8a", marginBottom:8, fontFamily:font }}>Daily limit reached</div>}
         <div style={{
-          marginTop:8, display:"inline-flex", alignItems:"center", gap:8,
+          display:"inline-flex", alignItems:"center", gap:8,
           background: disabled ? "#ffffff22" : "#c9a84c",
           color: disabled ? "#ffffff66" : "#1a0800",
           padding:"12px 22px", borderRadius:10,
@@ -216,7 +247,6 @@ function MemberBanner() {
           padding:"14px 28px", borderRadius:12,
           fontSize:17, fontFamily:font, fontWeight:500,
           textDecoration:"none", letterSpacing:1, width:"fit-content", marginTop:8,
-          boxShadow:"0 4px 24px #c9a84c44",
         }}>
           ✦ Join the Coven — $3/month
         </a>
@@ -227,6 +257,9 @@ function MemberBanner() {
 
 // ── Main Page ─────────────────────────────────────────────────
 export default function OraclePage() {
+  const { data: session } = useSession();
+  const isMember = session?.user?.is_member || false;
+
   const [mode, setMode] = useState("home");
   const [question, setQuestion] = useState("");
   const [drawnCards, setDrawnCards] = useState([]);
@@ -236,8 +269,6 @@ export default function OraclePage() {
   const [pendulumAns, setPendulumAns] = useState(null);
   const [pendulumSwing, setPendulumSwing] = useState(false);
   const [pendulumMsg, setPendulumMsg] = useState("");
-
-  // ← โหลดจาก localStorage จริงๆ หลัง mount
   const [tarotUsed, setTarotUsed] = useState(0);
   const [pendulumUsed, setPendulumUsed] = useState(0);
 
@@ -246,10 +277,15 @@ export default function OraclePage() {
     setPendulumUsed(getUsed("pendulum"));
   }, []);
 
+  const canTarot = isMember || tarotUsed < LIMIT;
+  const canPendulum = isMember || pendulumUsed < LIMIT;
+
   function drawCards() {
     if (!question.trim()) return;
-    const next = addUsed("tarot");
-    setTarotUsed(next);
+    if (!isMember) {
+      if (getUsed("tarot") >= LIMIT) { setTarotUsed(LIMIT); return; }
+      setTarotUsed(addUsed("tarot"));
+    }
     const shuffled = [...TAROT].sort(() => Math.random() - 0.5);
     setDrawnCards(shuffled.slice(0, 3));
     setRevealed([]); setReading("");
@@ -268,8 +304,10 @@ export default function OraclePage() {
 
   async function doPendulum() {
     if (!question.trim()) return;
-    const next = addUsed("pendulum");
-    setPendulumUsed(next);
+    if (!isMember) {
+      if (getUsed("pendulum") >= LIMIT) { setPendulumUsed(LIMIT); return; }
+      setPendulumUsed(addUsed("pendulum"));
+    }
     const ans = Math.random() > 0.5 ? "yes" : "no";
     setPendulumAns(ans); setPendulumSwing(true); setPendulumMsg("");
     setLoading(true);
@@ -302,26 +340,12 @@ export default function OraclePage() {
         {/* ── HOME ── */}
         {mode === "home" && (
           <>
-            <HeroBanner tarotUsed={tarotUsed} pendulumUsed={pendulumUsed}/>
+            <HeroBanner tarotUsed={tarotUsed} pendulumUsed={pendulumUsed} isMember={isMember} session={session}/>
             <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
-              <ServiceCard
-                image="/oracle-tarot.jpg" emoji="🃏"
-                title="Tarot Reading"
-                desc="Draw 3 cards and let Maple reveal what the forest sees."
-                cta="Begin Reading"
-                disabled={tarotUsed >= LIMIT}
-                onClick={() => setMode("tarot")}
-              />
-              <ServiceCard
-                image="/oracle-pendulum.jpg" emoji="🔮"
-                title="Pendulum Oracle"
-                desc="Ask a yes or no question. The pendulum knows."
-                cta="Consult"
-                disabled={pendulumUsed >= LIMIT}
-                onClick={() => setMode("pendulum")}
-              />
+              <ServiceCard image="/oracle-tarot.jpg" title="Tarot Reading" cta="Begin Reading" disabled={!canTarot} onClick={() => setMode("tarot")}/>
+              <ServiceCard image="/oracle-pendulum.jpg" title="Pendulum Oracle" cta="Consult" disabled={!canPendulum} onClick={() => setMode("pendulum")}/>
             </div>
-            <MemberBanner/>
+            {!isMember && <MemberBanner/>}
           </>
         )}
 
@@ -329,7 +353,7 @@ export default function OraclePage() {
         {mode === "tarot" && (
           <div>
             <button style={backBtn} onClick={() => { setMode("home"); reset(); }}>← Back</button>
-            {tarotUsed > LIMIT ? (
+            {!canTarot ? (
               <LimitReached type="tarot"/>
             ) : !drawnCards.length ? (
               <div style={{ maxWidth:560, margin:"0 auto" }}>
@@ -383,7 +407,7 @@ export default function OraclePage() {
         {mode === "pendulum" && (
           <div>
             <button style={backBtn} onClick={() => { setMode("home"); reset(); }}>← Back</button>
-            {pendulumUsed > LIMIT ? (
+            {!canPendulum ? (
               <LimitReached type="pendulum"/>
             ) : (
               <div style={{ textAlign:"center" }}>
