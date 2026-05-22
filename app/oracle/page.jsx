@@ -32,7 +32,6 @@ const TAROT = [
   { id:21, name:"The World",        image:"/cards/world.png",       keywords:"completion, integration, wholeness" },
 ];
 
-// ── localStorage helpers ──────────────────────────────────────
 const TODAY = new Date().toDateString();
 
 function getUsed(key) {
@@ -67,7 +66,6 @@ async function askMaple(type, payload) {
   return data.text;
 }
 
-// ── Pendulum ──────────────────────────────────────────────────
 function Pendulum({ swinging, answer }) {
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", height:240 }}>
@@ -82,12 +80,12 @@ function Pendulum({ swinging, answer }) {
         position:"relative",
       }}>
         <img src="/pendulum.png" alt="pendulum"
-  style={{ 
-    position:"absolute", bottom:-60,
-    left:"50%", transform:"translateX(-50%)",
-    width:80, height:"auto",
-  }}
-/>
+          style={{
+            position:"absolute", bottom:-80,
+            left:"50%", transform:"translateX(-50%)",
+            width:60, height:"auto",
+          }}
+        />
       </div>
       <style>{`
         @keyframes swingFwd { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(25deg)} }
@@ -97,7 +95,6 @@ function Pendulum({ swinging, answer }) {
   );
 }
 
-// ── Limit screen ──────────────────────────────────────────────
 function LimitReached({ type }) {
   return (
     <div style={{ textAlign:"center", padding:"48px 24px", border:"1px solid #c9a84c33", borderRadius:16, background:"#ffffff05" }}>
@@ -127,7 +124,6 @@ function LimitReached({ type }) {
   );
 }
 
-// ── Hero Banner ───────────────────────────────────────────────
 function HeroBanner({ tarotUsed, pendulumUsed, isMember, session }) {
   return (
     <div style={{
@@ -142,8 +138,6 @@ function HeroBanner({ tarotUsed, pendulumUsed, isMember, session }) {
       <div style={{ position:"relative", zIndex:2, padding:"52px 48px", maxWidth:540, display:"flex", flexDirection:"column", gap:16 }}>
         <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:5, textTransform:"uppercase" }}>Maple's Sanctum</div>
         <div style={{ fontSize:40, color:"#e8d5c4", lineHeight:1.2, fontFamily:font }}>Ask.<br/>The Garden<br/>will answer.</div>
-
-        {/* Status bar */}
         {session ? (
           <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
             <div style={{
@@ -156,9 +150,7 @@ function HeroBanner({ tarotUsed, pendulumUsed, isMember, session }) {
             <button onClick={() => signOut()} style={{
               background:"none", border:"none", color:"#8b735566",
               cursor:"pointer", fontSize:12, fontFamily:font,
-            }}>
-              sign out
-            </button>
+            }}>sign out</button>
           </div>
         ) : (
           <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
@@ -169,9 +161,7 @@ function HeroBanner({ tarotUsed, pendulumUsed, isMember, session }) {
               background:"none", border:"1px solid #c9a84c44", color:"#c9a84c",
               borderRadius:8, padding:"8px 14px", cursor:"pointer",
               fontSize:13, fontFamily:font,
-            }}>
-              Login →
-            </button>
+            }}>Login →</button>
           </div>
         )}
       </div>
@@ -179,7 +169,6 @@ function HeroBanner({ tarotUsed, pendulumUsed, isMember, session }) {
   );
 }
 
-// ── Service Card ──────────────────────────────────────────────
 function ServiceCard({ image, title, cta, onClick, disabled }) {
   const [hover, setHover] = useState(false);
   return (
@@ -201,7 +190,7 @@ function ServiceCard({ image, title, cta, onClick, disabled }) {
         onError={e => e.target.style.display="none"}
       />
       <div style={{ position:"absolute", inset:0, zIndex:0, background:"radial-gradient(circle at 50% 30%, #2d1b4e, #0a0514)" }}/>
-      <div style={{ position:"absolute", inset:0, zIndex:2, background:"linear-gradient(to top, rgba(10,5,20,0.4) 10%, rgba(10,5,20,0.2))" }}/>
+      <div style={{ position:"absolute", inset:0, zIndex:2, background:"linear-gradient(to top, rgba(10,5,20,0.4) 10%, rgba(10,5,20,0.0))" }}/>
       <div style={{ position:"relative", zIndex:3, padding:"28px", height:"100%", display:"flex", flexDirection:"column", justifyContent:"flex-end" }}>
         {disabled && <div style={{ fontSize:13, color:"#e88a8a", marginBottom:8, fontFamily:font }}>Daily limit reached</div>}
         <div style={{
@@ -218,7 +207,6 @@ function ServiceCard({ image, title, cta, onClick, disabled }) {
   );
 }
 
-// ── Member Banner ─────────────────────────────────────────────
 function MemberBanner() {
   return (
     <div style={{
@@ -256,7 +244,6 @@ function MemberBanner() {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────
 export default function OraclePage() {
   const { data: session } = useSession();
   const isMember = session?.user?.is_member || false;
@@ -329,16 +316,13 @@ export default function OraclePage() {
   return (
     <div style={{ minHeight:"100vh", background:"#0a0514", color:"#e8d5c4", padding:"40px 24px", fontFamily:font }}>
       <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
-
       <div style={{ maxWidth:860, margin:"0 auto" }}>
 
-        {/* Header */}
         <div style={{ textAlign:"center", marginBottom:40 }}>
           <div style={{ fontSize:44, color:"#c9a84c", letterSpacing:4, marginBottom:10 }}>🧙‍♀️ MAPLE'S SANCTUM</div>
           <div style={{ color:"#8b7355", fontSize:20, fontStyle:"italic" }}>where the veil grows thin</div>
         </div>
 
-        {/* ── HOME ── */}
         {mode === "home" && (
           <>
             <HeroBanner tarotUsed={tarotUsed} pendulumUsed={pendulumUsed} isMember={isMember} session={session}/>
@@ -350,7 +334,6 @@ export default function OraclePage() {
           </>
         )}
 
-        {/* ── TAROT ── */}
         {mode === "tarot" && (
           <div>
             <button style={backBtn} onClick={() => { setMode("home"); reset(); }}>← Back</button>
@@ -404,7 +387,6 @@ export default function OraclePage() {
           </div>
         )}
 
-        {/* ── PENDULUM ── */}
         {mode === "pendulum" && (
           <div>
             <button style={backBtn} onClick={() => { setMode("home"); reset(); }}>← Back</button>
