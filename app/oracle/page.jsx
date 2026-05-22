@@ -79,13 +79,7 @@ function Pendulum({ swinging, answer }) {
           : "none",
         position:"relative",
       }}>
-        <img src="/pendulum.png" alt="pendulum"
-          style={{
-            position:"absolute", bottom:-80,
-            left:"50%", transform:"translateX(-50%)",
-            width:60, height:"auto",
-          }}
-        />
+        <img src="/pendulum.png" alt="pendulum" style={{ position:"absolute", bottom:-80, left:"50%", transform:"translateX(-50%)", width:60, height:"auto" }}/>
       </div>
       <style>{`
         @keyframes swingFwd { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(25deg)} }
