@@ -68,7 +68,7 @@ async function askMaple(type, payload) {
 
 function Pendulum({ swinging, answer }) {
   return (
-    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", height:240 }}>
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", height:320 }}>
       <div style={{
         width:3, height:160,
         background:"linear-gradient(to bottom, #c9a84c, #8b7355)",
@@ -79,7 +79,7 @@ function Pendulum({ swinging, answer }) {
           : "none",
         position:"relative",
       }}>
-        <img src="/pendulum.png" alt="pendulum" style={{ position:"absolute", bottom:-80, left:"50%", transform:"translateX(-50%)", width:60, height:"auto" }}/>
+        <img src="/pendulum.png" alt="pendulum" style={{ position:"absolute", bottom:-120, left:"50%", transform:"translateX(-50%)", width:100, height:"auto" }}/>
       </div>
       <style>{`
         @keyframes swingFwd { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(25deg)} }
