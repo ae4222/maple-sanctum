@@ -200,7 +200,7 @@ function ServiceCard({ image, title, cta, onClick, disabled }) {
         onError={e => e.target.style.display="none"}
       />
       <div style={{ position:"absolute", inset:0, zIndex:0, background:"radial-gradient(circle at 50% 30%, #2d1b4e, #0a0514)" }}/>
-      <div style={{ position:"absolute", inset:0, zIndex:2, background:"linear-gradient(to top, rgba(10,5,20,0.95) 40%, rgba(10,5,20,0.2))" }}/>
+      <div style={{ position:"absolute", inset:0, zIndex:2, background:"linear-gradient(to top, rgba(10,5,20,0.4) 10%, rgba(10,5,20,0.2))" }}/>
       <div style={{ position:"relative", zIndex:3, padding:"28px", height:"100%", display:"flex", flexDirection:"column", justifyContent:"flex-end" }}>
         {disabled && <div style={{ fontSize:13, color:"#e88a8a", marginBottom:8, fontFamily:font }}>Daily limit reached</div>}
         <div style={{
