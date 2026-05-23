@@ -224,7 +224,7 @@ function MemberBanner() {
           Unlimited readings.<br/>Any hour of the night.
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:8, margin:"4px 0" }}>
-          {["Tarot reading — unlimited","Pendulum oracle — unlimited","The Garden Weekly Digest"].map((t,i) => (
+          {["Tarot reading — unlimited","Pendulum oracle — unlimited" ,"Dream Interpretation & Journal — unlimited" ,"Private Archive" , "The Garden Weekly Digest" ,"Exclusive Content" ].map((t,i) => (
             <div key={i} style={{ display:"flex", gap:10, fontSize:17, color:"#e8d5c4", fontFamily:font }}>
               <span style={{ color:"#a8e88a" }}>✓</span> {t}
             </div>
@@ -265,19 +265,20 @@ export default function OraclePage() {
     setPendulumUsed(getUsed("pendulum"));
   }, []);
 
-  const canTarot = isMember || tarotUsed < LIMIT;
-  const canPendulum = isMember || pendulumUsed < LIMIT;
+const canTarot = isMember || getUsed("tarot") < LIMIT;
+const canPendulum = isMember || getUsed("pendulum") < LIMIT;
 
   function drawCards() {
-    if (!question.trim()) return;
-    if (!isMember) {
-      if (getUsed("tarot") >= LIMIT) { setTarotUsed(LIMIT); return; }
-      setTarotUsed(addUsed("tarot"));
-    }
-    const shuffled = [...TAROT].sort(() => Math.random() - 0.5);
-    setDrawnCards(shuffled.slice(0, 3));
-    setRevealed([]); setReading("");
+  if (!question.trim()) return;
+  if (!isMember) {
+    if (getUsed("tarot") >= LIMIT) { setTarotUsed(LIMIT); return; }
   }
+  const shuffled = [...TAROT].sort(() => Math.random() - 0.5);
+  setDrawnCards(shuffled.slice(0, 3));
+  setRevealed([]); setReading("");
+  if (!isMember) setTarotUsed(addUsed("tarot"));
+}
+  
 
   async function revealCard(i) {
     if (revealed.includes(i)) return;
@@ -291,18 +292,18 @@ export default function OraclePage() {
   }
 
   async function doPendulum() {
-    if (!question.trim()) return;
-    if (!isMember) {
-      if (getUsed("pendulum") >= LIMIT) { setPendulumUsed(LIMIT); return; }
-      setPendulumUsed(addUsed("pendulum"));
-    }
-    const ans = Math.random() > 0.5 ? "yes" : "no";
-    setPendulumAns(ans); setPendulumSwing(true); setPendulumMsg("");
-    setLoading(true);
-    const msg = await askMaple("pendulum", { question, answer: ans });
-    setPendulumMsg(msg); setLoading(false);
-    setTimeout(() => setPendulumSwing(false), 4000);
+  if (!question.trim()) return;
+  if (!isMember) {
+    if (getUsed("pendulum") >= LIMIT) { setPendulumUsed(LIMIT); return; }
   }
+  const ans = Math.random() > 0.5 ? "yes" : "no";
+  setPendulumAns(ans); setPendulumSwing(true); setPendulumMsg("");
+  setLoading(true);
+  if (!isMember) setPendulumUsed(addUsed("pendulum"));
+  const msg = await askMaple("pendulum", { question, answer: ans });
+  setPendulumMsg(msg); setLoading(false);
+  setTimeout(() => setPendulumSwing(false), 4000);
+}
 
   function reset() {
     setQuestion(""); setDrawnCards([]); setRevealed([]);
@@ -330,6 +331,35 @@ export default function OraclePage() {
               <ServiceCard image="/oracle-tarot.jpg" title="Tarot Reading" cta="Begin Reading" disabled={!canTarot} onClick={() => setMode("tarot")}/>
               <ServiceCard image="/oracle-pendulum.jpg" title="Pendulum Oracle" cta="Consult" disabled={!canPendulum} onClick={() => setMode("pendulum")}/>
             </div>
+            {/* Dream Journal Banner */}
+<div
+  onClick={() => window.location.href = "/dream"}
+  style={{
+    position:"relative", borderRadius:20, overflow:"hidden",
+    marginTop:20, minHeight:200, border:"1px solid #c9a84c22",
+    cursor:"pointer",
+  }}
+  onMouseEnter={e => e.currentTarget.style.border="1px solid #c9a84c88"}
+  onMouseLeave={e => e.currentTarget.style.border="1px solid #c9a84c22"}
+>
+  <img src="/dream-banner.jpg" alt="Dream Journal"
+    style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
+    onError={e => e.target.style.display="none"}
+  />
+  <div style={{ position:"absolute", inset:0, background:"linear-gradient(to right, rgba(10,5,20,0.5) 30%, rgba(10,5,20,0.1))" }}/>
+  <div style={{ position:"relative", zIndex:2, padding:"40px 48px" }}>
+    <a href="/dream" style={{
+      display:"inline-flex", alignItems:"center", gap:8,
+      background:"#c9a84c", color:"#1a0800",
+      padding:"12px 24px", borderRadius:10,
+      fontSize:16, fontFamily:font, fontWeight:500,
+      textDecoration:"none", letterSpacing:1,
+    }}>
+      🌙 Enter Dream Journal →
+    </a>
+  </div>
+</div>
+
             {!isMember && <MemberBanner/>}
           </>
         )}
