@@ -2,10 +2,12 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SECRET_KEY
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.SUPABASE_SECRET_KEY ?? ""
+  );
+}
 
 const handler = NextAuth({
   providers: [
@@ -16,7 +18,7 @@ const handler = NextAuth({
   ],
   callbacks: {
     async signIn({ user }) {
-      // เช็คว่ามี user ใน members table มั้ย ถ้าไม่มีสร้างใหม่
+      const supabase = getSupabase();
       const { data } = await supabase
         .from("members")
         .select("email")
@@ -32,7 +34,7 @@ const handler = NextAuth({
       return true;
     },
     async session({ session }) {
-      // เพิ่ม is_member เข้า session
+      const supabase = getSupabase();
       const { data } = await supabase
         .from("members")
         .select("is_member")
