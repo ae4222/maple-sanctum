@@ -265,18 +265,19 @@ export default function OraclePage() {
     setPendulumUsed(getUsed("pendulum"));
   }, []);
 
-const canTarot = isMember || getUsed("tarot") < LIMIT;
-const canPendulum = isMember || getUsed("pendulum") < LIMIT;
+const canTarot = isMember || tarotUsed < LIMIT;
+const canPendulum = isMember || pendulumUsed < LIMIT;
 
-  function drawCards() {
+function drawCards() {
   if (!question.trim()) return;
-  if (!isMember) {
-    if (getUsed("tarot") >= LIMIT) { setTarotUsed(LIMIT); return; }
-  }
+  if (!isMember && tarotUsed >= LIMIT) return;
   const shuffled = [...TAROT].sort(() => Math.random() - 0.5);
   setDrawnCards(shuffled.slice(0, 3));
   setRevealed([]); setReading("");
-  if (!isMember) setTarotUsed(addUsed("tarot"));
+  if (!isMember) {
+    const next = addUsed("tarot");
+    setTarotUsed(next);
+  }
 }
   
 
@@ -290,21 +291,20 @@ const canPendulum = isMember || getUsed("pendulum") < LIMIT;
       setReading(msg); setLoading(false);
     }
   }
-
-  async function doPendulum() {
+async function doPendulum() {
   if (!question.trim()) return;
-  if (!isMember) {
-    if (getUsed("pendulum") >= LIMIT) { setPendulumUsed(LIMIT); return; }
-  }
+  if (!isMember && pendulumUsed >= LIMIT) return;
   const ans = Math.random() > 0.5 ? "yes" : "no";
   setPendulumAns(ans); setPendulumSwing(true); setPendulumMsg("");
   setLoading(true);
-  if (!isMember) setPendulumUsed(addUsed("pendulum"));
+  if (!isMember) {
+    const next = addUsed("pendulum");
+    setPendulumUsed(next);
+  }
   const msg = await askMaple("pendulum", { question, answer: ans });
   setPendulumMsg(msg); setLoading(false);
   setTimeout(() => setPendulumSwing(false), 4000);
 }
-
   function reset() {
     setQuestion(""); setDrawnCards([]); setRevealed([]);
     setReading(""); setPendulumAns(null); setPendulumMsg("");

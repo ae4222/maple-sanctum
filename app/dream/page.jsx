@@ -173,6 +173,10 @@ export default function DreamPage() {
       <div style={{ maxWidth:760, margin:"0 auto" }}>
 
         {/* Header */}
+        <button onClick={() => window.location.href = "/oracle"} style={{
+  background:"none", border:"none", color:"#8b7355",
+  cursor:"pointer", marginBottom:28, fontSize:17, fontFamily:font,
+}}>← Back</button>
         <div style={{ textAlign:"center", marginBottom:40 }}>
           <div style={{ fontSize:44, color:"#c9a84c", letterSpacing:4, marginBottom:10 }}>🌙 DREAM JOURNAL</div>
           <div style={{ color:"#8b7355", fontSize:18, fontStyle:"italic" }}>tell Maple what the night showed you</div>
