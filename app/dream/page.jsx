@@ -147,6 +147,26 @@ export default function DreamPage() {
     const data = await interpretDream(dreamText);
     setResult(data);
     setLoading(false);
+
+// Generate image
+if (data.interpretation) {
+  try {
+    const imgRes = await fetch("/api/dream-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        dream: dreamText, 
+        symbols: data.symbols 
+      }),
+    });
+    const imgData = await imgRes.json();
+    if (imgData.imageUrl) {
+      setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }));
+    }
+  } catch (e) {
+    console.error("Image gen error:", e);
+  }
+}
   }
 
   async function handleSave() {
@@ -267,8 +287,15 @@ export default function DreamPage() {
             {/* Result */}
             {result && (
               <div style={{ animation:"fadeUp .6s both" }}>
-{/* SVG Illustration */}
-{result.svg && (
+{/* Image */}
+{result.imageUrl && (
+  <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
+    <img src={result.imageUrl} alt="dream illustration"
+      style={{ width:"100%", height:"auto", display:"block" }}
+    />
+  </div>
+)}
+{result.svg && !result.imageUrl && (
   <div style={{
     marginBottom:20, borderRadius:16, overflow:"hidden",
     border:"1px solid #c9a84c22",
