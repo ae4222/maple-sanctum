@@ -168,21 +168,21 @@ if (data.interpretation) {
   }
 }
   }
-
-  async function handleSave() {
-    if (!session || !result) return;
-    setSaving(true);
-    const supabase = getSupabase();
-    await supabase.from("dreams").insert({
-      email: session.user.email,
-      dream_text: dreamText,
-      interpretation: result.interpretation,
-      symbols: JSON.stringify(result.symbols),
-      note: result.note,
-    });
-    setSaving(false);
-    setSaved(true);
-  }
+async function handleSave() {
+  if (!session || !result) return;
+  setSaving(true);
+  const supabase = getSupabase();
+  await supabase.from("dreams").insert({
+    email: session.user.email,
+    dream_text: dreamText,
+    interpretation: result.interpretation,
+    symbols: JSON.stringify(result.symbols),
+    note: result.note,
+    image_url: result.imageUrl ?? null,  // ✅ เพิ่มตรงนี้
+  });
+  setSaving(false);
+  setSaved(true);
+}
 
   const canInterpret = isMember || dreamUsed < WEEK_LIMIT;
 
@@ -388,7 +388,13 @@ if (data.interpretation) {
                 <div style={{ fontSize:12, color:"#8b7355", letterSpacing:2, marginBottom:16 }}>
                   {new Date(selectedDream.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" })}
                 </div>
-
+{selectedDream.image_url && (
+  <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
+    <img src={selectedDream.image_url} alt="dream illustration"
+      style={{ width:"100%", height:"auto", display:"block" }}
+    />
+  </div>
+)}
                 <div style={{ background:"#ffffff06", border:"1px solid #c9a84c22", borderRadius:14, padding:22, marginBottom:20 }}>
                   <div style={{ fontSize:12, color:"#8b7355", letterSpacing:2, marginBottom:10 }}>THE DREAM</div>
                   <p style={{ fontSize:16, color:"#c9b994aa", lineHeight:1.8, margin:0, fontFamily:font }}>{selectedDream.dream_text}</p>
