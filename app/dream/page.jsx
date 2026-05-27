@@ -179,7 +179,7 @@ async function handleSave() {
     interpretation: result.interpretation,
     symbols: JSON.stringify(result.symbols),
     note: result.note,
-    image_url: result.imageUrl ?? null,  // ✅ เพิ่มตรงนี้
+    image_url: result.imageUrl ?? null, 
   });
   setSaving(false);
   setSaved(true);
