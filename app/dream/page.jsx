@@ -76,7 +76,7 @@ function SymbolCard({ symbol }) {
 function DreamCard({ dream, onClick }) {
   const date = new Date(dream.created_at).toLocaleDateString("en-GB", {
     day:"numeric", month:"long", year:"numeric" ,
-     timeZone: "UTC",  // ✅ เพิ่มตรงนี้
+     timeZone: "UTC",   
   });
   const symbols = JSON.parse(dream.symbols || "[]");
   return (
@@ -394,7 +394,7 @@ async function handleSave() {
 )}
                 <div style={{ fontSize:12, color:"#8b7355", letterSpacing:2, marginBottom:16 }}>
                   {new Date(selectedDream.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" ,
-  timeZone: "UTC",  // ✅ เพิ่มตรงนี้ })}
+  timeZone: "UTC",    })}
                 </div>
 {selectedDream.image_url && (
   <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
