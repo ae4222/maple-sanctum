@@ -295,16 +295,7 @@ async function handleSave() {
       style={{ width:"100%", height:"auto", display:"block" }}
     />
   </div>
-)}
-{result.svg && !result.imageUrl && (
-  <div style={{
-    marginBottom:20, borderRadius:16, overflow:"hidden",
-    border:"1px solid #c9a84c22",
-    display:"flex", justifyContent:"center",
-    background:"#ffffff06",
-  }}
-    dangerouslySetInnerHTML={{ __html: result.svg }}
-  />
+
 )}
                 {/* Interpretation */}
                 <div style={{ background:"#ffffff06", border:"1px solid #c9a84c33", borderRadius:16, padding:28, marginBottom:20 }}>

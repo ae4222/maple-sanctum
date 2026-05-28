@@ -29,17 +29,15 @@ Respond ONLY in valid JSON, no markdown, no extra text:
     { "symbol": "Name", "emoji": "emoji", "meaning": "what this symbol means in context of this dream" }
   ],
  "note": "one closing line from Maple",
-  "svg": "a complete SVG illustration (400x300) in dark cottagecore witch style - deep navy midnight blue dark forest green warm amber gold colors, botanical elements flowers mushrooms stars moon, mysterious yet cozy, dark background #0a0514, whimsical magical. Must start with <svg and end with </svg>"
-
+  
 
 }
 
 Only include symbols that actually appear in this dream. Be specific to what was described.
-For SVG: draw something representing the dream symbolically. Warm cozy cottagecore witch aesthetic.`;
 
       const dreamMsg = await client.messages.create({
         model: "claude-sonnet-4-5",
-        max_tokens: 600,
+        max_tokens: 2000,
         messages: [{ role: "user", content: dreamPrompt }],
       });
 
