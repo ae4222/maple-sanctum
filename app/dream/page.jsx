@@ -209,9 +209,11 @@ async function handleSave() {
   { key:"journal", label:"✦ Interpret" },
   { key:"archive", label:"📖 Archive" },
 ].map(t => (
-  <button key={t.key} onClick={() => {
-    setTab(t.key);
-    if (t.key === "archive") setResult(null);
+ <button key={t.key} onClick={() => {
+  setTab(t.key);
+  setResult(null);
+  setSelectedDream(null);
+}} style={{
   }} style={{
               flex:1, padding:"14px", border:"none", cursor:"pointer",
               background: tab === t.key ? "#c9a84c18" : "transparent",
