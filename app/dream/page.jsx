@@ -206,10 +206,13 @@ async function handleSave() {
         {/* Tabs */}
         <div style={{ display:"flex", gap:0, marginBottom:32, border:"1px solid #c9a84c22", borderRadius:12, overflow:"hidden" }}>
           {[
-            { key:"journal", label:"✦ Interpret" },
-            { key:"archive", label:"📖 Archive" },
-          ].map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{
+  { key:"journal", label:"✦ Interpret" },
+  { key:"archive", label:"📖 Archive" },
+].map(t => (
+  <button key={t.key} onClick={() => {
+    setTab(t.key);
+    if (t.key === "archive") setResult(null);
+  }} style={{
               flex:1, padding:"14px", border:"none", cursor:"pointer",
               background: tab === t.key ? "#c9a84c18" : "transparent",
               color: tab === t.key ? "#c9a84c" : "#8b7355",
@@ -369,31 +372,29 @@ async function handleSave() {
                 }}>
                   Continue with Google
                 </button>
-              </div>
+             </div>
             ) : selectedDream ? (
               <div>
                 <button onClick={() => setSelectedDream(null)} style={{
                   background:"none", border:"none", color:"#8b7355",
                   cursor:"pointer", marginBottom:24, fontSize:16, fontFamily:font,
                 }}>← Back to archive</button>
-{selectedDream.image_url && (
-  <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
-    <img src={selectedDream.image_url} alt="dream illustration"
-      style={{ width:"100%", height:"auto", display:"block" }}
-    />
-  </div>
-)}
+
                 <div style={{ fontSize:12, color:"#8b7355", letterSpacing:2, marginBottom:16 }}>
-                  {new Date(selectedDream.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" ,
-  timeZone: "UTC",    })}
+                  {new Date(selectedDream.created_at).toLocaleDateString("en-GB", { 
+                    day:"numeric", month:"long", year:"numeric",
+                    timeZone: "UTC",
+                  })}
                 </div>
-{selectedDream.image_url && (
-  <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
-    <img src={selectedDream.image_url} alt="dream illustration"
-      style={{ width:"100%", height:"auto", display:"block" }}
-    />
-  </div>
-)}
+
+                {selectedDream.image_url && (
+                  <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
+                    <img src={selectedDream.image_url} alt="dream illustration"
+                      style={{ width:"100%", height:"auto", display:"block" }}
+                    />
+                  </div>
+                )}
+
                 <div style={{ background:"#ffffff06", border:"1px solid #c9a84c22", borderRadius:14, padding:22, marginBottom:20 }}>
                   <div style={{ fontSize:12, color:"#8b7355", letterSpacing:2, marginBottom:10 }}>THE DREAM</div>
                   <p style={{ fontSize:16, color:"#c9b994aa", lineHeight:1.8, margin:0, fontFamily:font }}>{selectedDream.dream_text}</p>
