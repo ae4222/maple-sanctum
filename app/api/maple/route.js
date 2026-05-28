@@ -11,7 +11,7 @@ export async function POST(req) {
 A seeker asks: "${payload.question}"
 The cards drawn are: ${payload.cards.map(c => c.name).join(", ")}.
 Give a mystical tarot reading of 3-4 sentences as Maple. Be poetic and warm.`;
-} else if (type === "pendulum") {
+    } else if (type === "pendulum") {
       prompt = `You are Maple, a forest witch.
 A seeker asks: "${payload.question}"
 The pendulum swings ${payload.answer === "yes" ? "YES" : "NO"}.
@@ -28,12 +28,10 @@ Respond ONLY in valid JSON, no markdown, no extra text:
   "symbols": [
     { "symbol": "Name", "emoji": "emoji", "meaning": "what this symbol means in context of this dream" }
   ],
- "note": "one closing line from Maple",
-  
-
+  "note": "one closing line from Maple"
 }
 
-Only include symbols that actually appear in this dream. Be specific to what was described.
+Only include symbols that actually appear in this dream. Be specific to what was described.`;
 
       const dreamMsg = await client.messages.create({
         model: "claude-sonnet-4-5",
@@ -43,10 +41,10 @@ Only include symbols that actually appear in this dream. Be specific to what was
 
       try {
         const clean = dreamMsg.content[0].text
-  .replace(/```json/g, "")
-  .replace(/```/g, "")
-  .trim();
-const parsed = JSON.parse(clean);
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
+        const parsed = JSON.parse(clean);
         return Response.json(parsed);
       } catch {
         return Response.json({ interpretation: dreamMsg.content[0].text, symbols: [], note: "" });
