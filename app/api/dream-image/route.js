@@ -8,8 +8,9 @@ export async function POST(req) {
     const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
     const symbolList = symbols?.map(s => s.symbol).join(", ") || "";
 
-   const prompt = `anime watercolor illustration style, 
-soft dreamy atmosphere, lush detailed background,
+   const prompt = `risograph print style, limited color palette,
+grainy texture, retro illustration, dreamy and surreal,
+muted pinks and teals, mystical atmosphere, soft dreamy atmosphere, lush detailed background,
 warm golden light, whimsical and magical,
 representing: ${dream}, symbols: ${symbolList}. 
 No text, no words, no letters.`;
