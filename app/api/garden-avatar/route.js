@@ -10,7 +10,7 @@ export async function POST(req) {
     const prompt = `${witchType} witch with ${familiar} familiar, ${hair} hair,
 risograph print style mystical character card, vintage occult zine illustration, 
 retro folk-art inspired fantasy portrait, limited muted color palette, muted teal and dusty rose palette with faded moss green accents, 
-warm cream paper tones, smoky navy shadows, desaturated earthy pigments, softly aged ink colors,
+warm cream paper tones, smoky lilac shadows, desaturated earthy pigments, softly aged ink colors,
 layered soy ink textures, grainy recycled paper texture, subtle ink bleed and misaligned print registration, 
 faded teal and dusty rose tones, moss green and warm cream accents, aged printed paper surface, 
 surreal botanical symbolism, dreamlike and poetic atmosphere, whimsical magical realism, hand-drawn imperfect linework, 
