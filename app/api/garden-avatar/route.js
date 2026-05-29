@@ -7,11 +7,12 @@ export async function POST(req) {
 
     const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
-    const prompt = `portrait of a ${witchType} witch named ${witchName}, 
+const prompt = `portrait of a ${witchType} witch, 
 ${hair} hair, ${aesthetic} aesthetic, with a ${familiar} familiar, 
-tarot card art style, art nouveau composition, ornate gilded borders, 
-symbolic flat illustration, muted color palette, intricate filigree,
-no text, no words, no letters`;
+dark fantasy portrait, moody cinematic lighting, gritty texture, 
+magical atmosphere, detailed face, high contrast,
+centered composition, upper body portrait,
+no text, no words, no letters, no frame, no border`;
 
     const output = await replicate.run("black-forest-labs/flux-dev", {
       input: {
