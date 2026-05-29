@@ -13,42 +13,33 @@ function getSupabase() {
 }
 
 function WitchCard({ member }) {
-  const isMaple = member.is_maple;
+  const isKeeper = member.is_keeper;
   const isFounder = member.is_founder;
-
-  const borderColor = isMaple
-    ? "linear-gradient(135deg, #c9a84c, #f0d080, #c9a84c)"
-    : isFounder
-    ? "linear-gradient(135deg, #9b7fd4, #c9a84c, #9b7fd4)"
-    : "1px solid #c9a84c22";
 
   return (
     <div style={{
-      background:"#ffffff06",
       borderRadius:16,
       overflow:"hidden",
-      padding: isMaple || isFounder ? 2 : 0,
-      background: isMaple
+      padding: isKeeper || isFounder ? 2 : 0,
+      background: isKeeper
         ? "linear-gradient(135deg, #c9a84c, #f0d080, #c9a84c)"
         : isFounder
         ? "linear-gradient(135deg, #9b7fd4, #c9a84c, #9b7fd4)"
         : "transparent",
-      border: !isMaple && !isFounder ? "1px solid #c9a84c22" : "none",
+      border: !isKeeper && !isFounder ? "1px solid #c9a84c22" : "none",
     }}>
       <div style={{
         background:"#0f0720",
-        borderRadius: isMaple || isFounder ? 14 : 16,
+        borderRadius: isKeeper || isFounder ? 14 : 16,
         overflow:"hidden",
       }}>
-        {/* Avatar */}
         <div style={{ position:"relative" }}>
           <img
             src={member.avatar_url}
             alt={member.witch_name}
             style={{ width:"100%", aspectRatio:"3/4", objectFit:"cover", display:"block" }}
           />
-          {/* Badge */}
-          {isMaple && (
+          {isKeeper && (
             <div style={{
               position:"absolute", top:10, left:10,
               background:"linear-gradient(135deg,#c9a84c,#f0d080)",
@@ -56,7 +47,7 @@ function WitchCard({ member }) {
               padding:"4px 10px", borderRadius:20, fontFamily:font,
             }}>✦ KEEPER</div>
           )}
-          {isFounder && !isMaple && (
+          {isFounder && !isKeeper && (
             <div style={{
               position:"absolute", top:10, left:10,
               background:"linear-gradient(135deg,#9b7fd4,#c9a84c)",
@@ -66,27 +57,26 @@ function WitchCard({ member }) {
           )}
         </div>
 
-        {/* Info */}
         <div style={{ padding:"16px", textAlign:"center" }}>
           <div style={{
             fontSize:18, letterSpacing:2, marginBottom:4,
-            color: isMaple ? "#c9a84c" : isFounder ? "#b89fd4" : "#e8d5c4",
+            color: isKeeper ? "#c9a84c" : isFounder ? "#b89fd4" : "#e8d5c4",
             fontFamily:font,
           }}>{member.witch_name}</div>
           <div style={{ fontSize:12, color:"#8b7355", letterSpacing:1, fontFamily:font }}>
             {member.witch_type} Witch · {member.familiar} Familiar
           </div>
-          {isMaple && (
+          {isKeeper && (
             <div style={{ fontSize:11, color:"#c9a84c88", letterSpacing:2, marginTop:6, fontStyle:"italic", fontFamily:font }}>
               Keeper of the Garden Gate
             </div>
           )}
-          {isFounder && !isMaple && (
+          {isFounder && !isKeeper && (
             <div style={{ fontSize:11, color:"#9b7fd488", letterSpacing:2, marginTop:6, fontStyle:"italic", fontFamily:font }}>
               Garden Founder
             </div>
           )}
-          {!isMaple && !isFounder && (
+          {!isKeeper && !isFounder && (
             <div style={{ fontSize:11, color:"#8b735588", letterSpacing:2, marginTop:6, fontStyle:"italic", fontFamily:font }}>
               Garden Member
             </div>
@@ -111,6 +101,7 @@ export default function GardenPage() {
     const { data } = await supabase
       .from("garden_members")
       .select("*")
+      .order("is_keeper", { ascending: false })
       .order("is_founder", { ascending: false })
       .order("founder_number", { ascending: true })
       .order("joined_at", { ascending: true });
@@ -128,17 +119,9 @@ export default function GardenPage() {
     setMyProfile(data || null);
   }
 
-  const mapleCard = {
-    witch_name: "Maple",
-    witch_type: "Forest",
-    familiar: "Fox",
-    avatar_url: "/maple-avatar.png",
-    is_maple: true,
-    is_founder: false,
-  };
-
-  const founders = members.filter(m => m.is_founder);
-  const regular = members.filter(m => !m.is_founder);
+  const keeper = members.find(m => m.is_keeper);
+  const founders = members.filter(m => m.is_founder && !m.is_keeper);
+  const regular = members.filter(m => !m.is_founder && !m.is_keeper);
 
   return (
     <div style={{ minHeight:"100vh", background:"#0a0514", color:"#e8d5c4", padding:"40px 24px", fontFamily:font }}>
@@ -155,7 +138,6 @@ export default function GardenPage() {
           <div style={{ color:"#8b7355", fontSize:18, fontStyle:"italic" }}>a gathering of witches</div>
         </div>
 
-        {/* My profile button */}
         {session && (
           <div style={{ textAlign:"right", marginBottom:32 }}>
             {myProfile ? (
@@ -179,17 +161,17 @@ export default function GardenPage() {
           </div>
         ) : (
           <>
-            {/* Maple */}
-            <div style={{ marginBottom:48 }}>
-              <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:20, textAlign:"center" }}>
-                ✦ KEEPER OF THE GARDEN GATE ✦
+            {keeper && (
+              <div style={{ marginBottom:48 }}>
+                <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:20, textAlign:"center" }}>
+                  ✦ KEEPER OF THE GARDEN GATE ✦
+                </div>
+                <div style={{ maxWidth:240, margin:"0 auto" }}>
+                  <WitchCard member={keeper}/>
+                </div>
               </div>
-              <div style={{ maxWidth:240, margin:"0 auto" }}>
-                <WitchCard member={mapleCard}/>
-              </div>
-            </div>
+            )}
 
-            {/* Founders */}
             {founders.length > 0 && (
               <div style={{ marginBottom:48 }}>
                 <div style={{ fontSize:12, color:"#9b7fd4", letterSpacing:3, marginBottom:20, textAlign:"center" }}>
@@ -201,7 +183,6 @@ export default function GardenPage() {
               </div>
             )}
 
-            {/* Members */}
             {regular.length > 0 && (
               <div>
                 <div style={{ fontSize:12, color:"#8b7355", letterSpacing:3, marginBottom:20, textAlign:"center" }}>

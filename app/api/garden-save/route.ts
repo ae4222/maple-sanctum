@@ -15,13 +15,20 @@ export async function POST(req: Request) {
 
   const body = await req.json();
 
-  // check founder number
-  const { count } = await supabase
-    .from("garden_members")
-    .select("*", { count: "exact", head: true });
+  const isKeeper = session.user.email === "witchgardenasmr@gmail.com";
 
-  const founderNumber = (count ?? 0) < 50 ? (count ?? 0) + 1 : null;
-  const isFounder = founderNumber !== null;
+  let founderNumber = null;
+  let isFounder = false;
+
+  if (!isKeeper) {
+    const { count } = await supabase
+      .from("garden_members")
+      .select("*", { count: "exact", head: true })
+      .eq("is_keeper", false);
+
+    founderNumber = (count ?? 0) < 50 ? (count ?? 0) + 1 : null;
+    isFounder = founderNumber !== null;
+  }
 
   const { error } = await supabase.from("garden_members").upsert({
     email: session.user.email,
@@ -31,6 +38,7 @@ export async function POST(req: Request) {
     hair: body.hair,
     aesthetic: body.aesthetic,
     avatar_url: body.avatarUrl,
+    is_keeper: isKeeper,
     is_founder: isFounder,
     founder_number: founderNumber,
     is_active: true,
