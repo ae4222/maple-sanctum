@@ -7,26 +7,24 @@ export async function POST(req) {
 
    const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
-const aestheticMap = {
-  "Cottagecore": "soft warm earth tones, dried flowers, linen textures",
-  "Dark Academic": "deep burgundy and forest green, candlelight, old books",
-  "Celestial": "deep midnight blue, silver stars, moon glow",
-  "Botanical": "lush green foliage, ink botanical sketches, paper texture",
+
 };
 
 const prompt = `watercolor and ink portrait, ${witchType} witch, 
 ${hair} hair, ${familiar} familiar beside her,
-${aestheticMap[aesthetic] || aesthetic},
-aged parchment background, loose expressive brushwork,
-botanical manuscript margins, soft candlelit atmosphere,
-muted earth tones, natural asymmetrical face,
-upper body centered composition,
-no text, no words, no frame, no border`;
+risograph print style mystical character card, retro occult illustration, vintage indie zine aesthetic, 
+limited color palette, layered ink textures, grainy paper texture, soft ink bleed, imperfect print registration, 
+muted teal and dusty rose palette, faded moss green, warm cream paper, 
+surreal botanical symbolism, dreamlike composition, hand-drawn linework, flat graphic shading, 
+subtle watercolor stains, retro storybook illustration, poetic and mysterious atmosphere, 
+analog print feel, expressive but simplified facial features, natural proportions, 
+folk art influence, centered composition, cozy magical mood, aged printed paper texture,
+upper body centered composition, no text, no words, no frame, no border`;
 
 const output = await replicate.run("black-forest-labs/flux-dev", {
   input: {
     prompt,
-    negative_prompt: "3d render, plastic skin, overly symmetrical, perfect face, high saturation, clean digital lineart, generic tarot style",
+    negative_prompt: "anime eyes, disney style, glossy rendering, hyper detailed face, realistic skin, mobile game art, fantasy pinup, polished digital painting, 3d render, ai generated face, symmetrical face, vibrant neon colors, ornate tarot frame, sharp digital lineart, shiny skin, big eyes, cute chibi style, photorealism, text, watermark, logo",
     num_outputs: 1,
     aspect_ratio: "3:4",
     output_format: "webp",
@@ -34,7 +32,6 @@ const output = await replicate.run("black-forest-labs/flux-dev", {
     num_inference_steps: 28,
   }
 });
-
 
     let tempUrl = null;
     if (Array.isArray(output)) {
