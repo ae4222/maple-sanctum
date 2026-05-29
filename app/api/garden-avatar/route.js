@@ -9,8 +9,11 @@ export async function POST(req) {
 
 const prompt = `portrait of a ${witchType} witch, 
 ${hair} hair, ${aesthetic} aesthetic, with a ${familiar} familiar, 
-tarot card art, art nouveau style,  magical atmosphere, detailed face, gold leaf accents, whimsical hand-drawn feel,  soft warm lighting, 
-centered composition, upper body portrait,
+hand-painted storybook tarot portrait, antique botanical illustration influence, 
+subtle art nouveau frame details, handcrafted ink ornamentation, expressive illustrated face, 
+soft candlelit skin tones, moss green and antique brass palette, dark midnight navy background, 
+vellum paper texture, brushed gold accents, whimsical forest mysticism, painterly imperfections, 
+cozy magical atmosphere, upper body portrait, centered composition
 no text, no words, no letters, no frame, no border`;
 
     const output = await replicate.run("black-forest-labs/flux-dev", {
