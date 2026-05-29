@@ -6,9 +6,22 @@ import { createClient } from "@supabase/supabase-js";
 const font = "'EB Garamond', Garamond, Georgia, serif";
 const WEEK_KEY = "dream_week";
 const WEEK_LIMIT = 3;
-const [convoMessages, setConvoMessages] = useState([]);
-const [convoInput, setConvoInput] = useState("");
-const [convoLoading, setConvoLoading] = useState(false);
+export default function DreamPage() {
+  const { data: session } = useSession();
+  const isMember = session?.user?.is_member || false;
+
+  const [tab, setTab] = useState("journal");
+  const [dreamText, setDreamText] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [dreamUsed, setDreamUsed] = useState(0);
+  const [dreams, setDreams] = useState([]);
+  const [selectedDream, setSelectedDream] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [convoMessages, setConvoMessages] = useState([]); 
+  const [convoInput, setConvoInput] = useState("");        
+  const [convoLoading, setConvoLoading] = useState(false); 
 
 function getSupabase() {
   return createClient(
