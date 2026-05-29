@@ -18,7 +18,7 @@ surreal botanical symbolism, poetic and mysterious atmosphere, analog printmakin
 weathered vintage imperfections, cozy occult zine feeling, artisan handmade print quality, 
 centered composition`;
 
-const output = await replicate.run("prunaai/z-image", {
+const output = await replicate.run("black-forest-labs/flux-1.1-pro", {
   input: {
     prompt,
     negative_prompt: "anime, disney, pixar, manga, cute face, glossy skin, giant eyes, fantasy waifu, mobile game art, polished digital painting, hyper detailed face, cinematic portrait, perfect symmetry, shiny rendering, vibrant colors, photorealism, 3d render, ai generated girl, glamorous fantasy character, sharp vector illustration",
