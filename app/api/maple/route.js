@@ -11,6 +11,7 @@ export async function POST(req) {
 A seeker asks: "${payload.question}"
 The cards drawn are: ${payload.cards.map(c => c.name).join(", ")}.
 Give a mystical tarot reading of 3-4 sentences as Maple. Be poetic and warm.`;
+
     } else if (type === "pendulum") {
       prompt = `You are Maple, a forest witch.
 A seeker asks: "${payload.question}"
@@ -49,6 +50,22 @@ Only include symbols that actually appear in this dream. Be specific to what was
       } catch {
         return Response.json({ interpretation: dreamMsg.content[0].text, symbols: [], note: "" });
       }
+
+    } else if (type === "dream-convo") {
+      const { dream, interpretation, symbols, messages } = payload;
+      const systemContext = `You are Maple, a forest witch and dream reader.
+The seeker shared this dream: "${dream}"
+Your interpretation was: "${interpretation}"
+Symbols found: ${symbols?.map(s => s.symbol).join(", ")}
+Continue the conversation as Maple — mystical, warm, poetic. Keep responses to 2-3 sentences.`;
+
+      const msg = await client.messages.create({
+        model: "claude-sonnet-4-5",
+        max_tokens: 300,
+        system: systemContext,
+        messages: messages,
+      });
+      return Response.json({ text: msg.content[0].text });
     }
 
     const msg = await client.messages.create({

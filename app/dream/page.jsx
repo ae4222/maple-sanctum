@@ -6,6 +6,9 @@ import { createClient } from "@supabase/supabase-js";
 const font = "'EB Garamond', Garamond, Georgia, serif";
 const WEEK_KEY = "dream_week";
 const WEEK_LIMIT = 3;
+const [convoMessages, setConvoMessages] = useState([]);
+const [convoInput, setConvoInput] = useState("");
+const [convoLoading, setConvoLoading] = useState(false);
 
 function getSupabase() {
   return createClient(
@@ -141,6 +144,7 @@ export default function DreamPage() {
     setLoading(true);
     setResult(null);
     setSaved(false);
+    setConvoMessages([]);
 
     if (!isMember) addDreamUsed();
     setDreamUsed(getDreamUsed());
@@ -184,7 +188,30 @@ async function handleSave() {
   setSaving(false);
   setSaved(true);
 }
+async function handleConvo() {
+  if (!convoInput.trim()) return;
+  const userMsg = { role: "user", content: convoInput };
+  setConvoMessages(prev => [...prev, userMsg]);
+  setConvoInput("");
+  setConvoLoading(true);
 
+  const res = await fetch("/api/maple", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "dream-convo",
+      payload: {
+        dream: dreamText,
+        interpretation: result.interpretation,
+        symbols: result.symbols,
+        messages: [...convoMessages, userMsg],
+      }
+    }),
+  });
+  const data = await res.json();
+  setConvoMessages(prev => [...prev, { role: "assistant", content: data.text }]);
+  setConvoLoading(false);
+}
   const canInterpret = isMember || dreamUsed < WEEK_LIMIT;
 
   return (
@@ -328,7 +355,61 @@ async function handleSave() {
                     "{result.note}"
                   </div>
                 )}
+{/* Dream Conversation */}
+<div style={{ marginBottom:24 }}>
+  <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>
+    ASK MAPLE
+  </div>
 
+  {convoMessages.map((m, i) => (
+    <div key={i} style={{
+      marginBottom:12,
+      display:"flex",
+      justifyContent: m.role === "user" ? "flex-end" : "flex-start",
+    }}>
+      <div style={{
+        maxWidth:"80%", padding:"12px 16px",
+        borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+        background: m.role === "user" ? "#2d1b4e" : "#ffffff08",
+        border: m.role === "user" ? "none" : "1px solid #c9a84c22",
+        color: "#e8d5c4", fontSize:16, fontFamily:font, lineHeight:1.8,
+      }}>
+        {m.role === "assistant" && (
+          <div style={{ fontSize:11, color:"#c9a84c", letterSpacing:2, marginBottom:6 }}>MAPLE</div>
+        )}
+        {m.content}
+      </div>
+    </div>
+  ))}
+
+  {convoLoading && (
+    <div style={{ color:"#8b7355", fontSize:14, fontFamily:font, fontStyle:"italic", marginBottom:12 }}>
+      Maple listens to the mist...
+    </div>
+  )}
+
+  <div style={{ display:"flex", gap:8, marginTop:8 }}>
+    <input
+      value={convoInput}
+      onChange={e => setConvoInput(e.target.value)}
+      onKeyDown={e => e.key === "Enter" && handleConvo()}
+      placeholder="Ask Maple about your dream..."
+      style={{
+        flex:1, padding:"12px 16px",
+        background:"#ffffff08", border:"1px solid #c9a84c44",
+        borderRadius:10, color:"#e8d5c4",
+        fontSize:15, fontFamily:font, outline:"none",
+      }}
+    />
+    <button onClick={handleConvo} disabled={!convoInput.trim() || convoLoading} style={{
+      padding:"12px 20px",
+      background: convoInput.trim() ? "linear-gradient(135deg,#2d1b4e,#4a2080)" : "#ffffff10",
+      border:"none", borderRadius:10,
+      color: convoInput.trim() ? "#e8d5c4" : "#ffffff33",
+      fontFamily:font, fontSize:15, cursor:"pointer",
+    }}>✦</button>
+  </div>
+</div>
                 {/* Save button */}
                 {session && !saved && (
                   <button onClick={handleSave} disabled={saving} style={{
