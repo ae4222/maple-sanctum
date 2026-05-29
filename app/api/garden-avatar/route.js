@@ -7,8 +7,7 @@ export async function POST(req) {
 
     const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
-    const prompt = `watercolor and ink portrait, ${witchType} witch, 
-${hair} hair, ${familiar} familiar beside her,
+    const prompt = `${witchType} witch with ${familiar} familiar, ${hair} hair,
 risograph print style mystical character card, vintage occult zine illustration, 
 retro folk-art inspired fantasy portrait, limited muted color palette, muted teal and dusty rose palette with faded moss green accents, 
 warm cream paper tones, smoky navy shadows, desaturated earthy pigments, softly aged ink colors,
