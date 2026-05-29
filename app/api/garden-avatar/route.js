@@ -9,11 +9,35 @@ export async function POST(req) {
 
 const prompt = `portrait of a ${witchType} witch, 
 ${hair} hair, ${aesthetic} aesthetic, with a ${familiar} familiar, 
-hand-painted storybook tarot portrait, antique botanical illustration influence, 
-subtle art nouveau frame details, handcrafted ink ornamentation, expressive illustrated face, 
-soft candlelit skin tones, moss green and antique brass palette, dark midnight navy background, 
-vellum paper texture, brushed gold accents, whimsical forest mysticism, painterly imperfections, 
-cozy magical atmosphere, upper body portrait, centered composition
+hand-painted storybook tarot card illustration, mystical witch portrait with animal familiar, 
+antique botanical illustration influence, watercolor and ink on aged parchment paper, 
+subtle art nouveau frame details, worn gold leaf accents, weathered vintage texture, 
+expressive illustrated face with natural asymmetry, delicate freckles, soft realistic eyes, 
+painterly brush strokes, ink bleed, handcrafted ornamental border, cozy magical atmosphere, 
+cinematic candlelight glow, moonlit fog ambience, botanical linework, 
+layered vintage fabrics, organic imperfections, upper body portrait, centered composition
+
+
+COLOR PALETTE:
+deep forest teal, moss green, muted olive, antique brass gold, warm candle amber, aged parchment beige, dark navy shadows, desaturated botanical reds, soft ivory highlights
+
+LIGHTING:
+soft candlelit skin tones, subtle moonlight rim light, deep atmospheric shadows, warm amber highlights, muted low saturation cinematic lighting
+
+MATERIAL & TEXTURE:
+aged vellum texture, watercolor wash, brushed pigment, faded ink lines, worn paper grain, gold foil wear, antique book page texture, hand-painted imperfections
+
+STYLE NOTES:
+storybook illustration mixed with antique botanical print, vintage occult manuscript aesthetic, handcrafted mystical artifact feel, painterly and organic rather than polished digital art
+
+negative prompt:
+3d render, glossy skin, plastic texture, hyper realistic face, anime style, overly symmetrical face, 
+sharp digital rendering, generic fantasy tarot, mobile game art, 
+clean vector lineart, neon colors, high saturation, photorealistic skin, 
+ai generated look, modern digital painting, perfect face, over detailed ornate frame, 
+text watermark, signature, blurry image
+
+
 no text, no words, no letters, no frame, no border`;
 
     const output = await replicate.run("black-forest-labs/flux-dev", {
