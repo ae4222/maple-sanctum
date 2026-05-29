@@ -16,7 +16,7 @@ ${hair} hair, ${aesthetic} aesthetic,
 upper body portrait, centered composition,
 no text, no words, no letters`;
 
-const output = await replicate.run("black-forest-labs/flux-dev", {
+const output = await replicate.run("krea-ai/krea", {
   input: {
     prompt,
     negative_prompt: "3d render, plastic skin, overly symmetrical, perfect face, high saturation, clean digital lineart, generic tarot style",
