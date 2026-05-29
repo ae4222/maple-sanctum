@@ -21,8 +21,6 @@ centered composition`;
 const output = await replicate.run("black-forest-labs/flux-1.1-pro", {
   input: {
     prompt,
-    negative_prompt: "anime, disney, pixar, manga, cute face, glossy skin, giant eyes, fantasy waifu, mobile game art, polished digital painting, hyper detailed face, cinematic portrait, perfect symmetry, shiny rendering, vibrant colors, photorealism, 3d render, ai generated girl, glamorous fantasy character, sharp vector illustration",
-    num_outputs: 1,
     aspect_ratio: "3:4",
     output_format: "webp",
     output_quality: 85,
