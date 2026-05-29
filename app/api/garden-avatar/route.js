@@ -7,29 +7,27 @@ export async function POST(req) {
 
     const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
-    const prompt = `${witchType} witch with ${familiar} familiar, ${hair} hair,
-risograph  print style mystical character card, vintage occult zine illustration,
-retro folk-art inspired fantasy portrait, limited muted color palette, muted teal and dusty rose palette with faded moss green accents, 
-warm cream paper tones, smoky lilac shadows, desaturated earthy pigments, softly aged ink colors,
-layered soy ink textures, grainy recycled paper texture, subtle ink bleed and misaligned print registration, 
-faded teal and dusty rose tones, moss green and warm cream accents, aged printed paper surface, 
-surreal botanical symbolism, dreamlike and poetic atmosphere, whimsical magical realism, hand-drawn imperfect linework, 
-flat graphic shading, soft watercolor stains, analog printmaking aesthetic, expressive yet simplified facial features, 
-natural proportions, understated emotion, cozy mystical mood, antique storybook influence, indie art print feel, 
-centered portrait composition, tactile handmade quality, softly worn vintage imperfections,
-upper body centered composition, no text, no words, no frame, no border`;
+const prompt = `vintage risograph folk illustration of a mystical ${witchType} witch, 
+inspired by eastern european storybook art and antique botanical field guides, 
+${hair} hair, ${familiar} familiar,
+limited muted color palette, faded teal and moss green tones, dusty terracotta accents, 
+aged cream paper texture, layered soy ink printing, imperfect ink registration, 
+grainy recycled paper, hand-drawn linework, flat graphic shading, 
+simplified facial structure, small realistic eyes, understated facial features, non-glamorous character design, 
+surreal botanical symbolism, poetic and mysterious atmosphere, analog printmaking aesthetic, 
+weathered vintage imperfections, cozy occult zine feeling, artisan handmade print quality, 
+centered composition`;
 
-    const output = await replicate.run("black-forest-labs/flux-dev", {
-      input: {
-        prompt,
-        negative_prompt: "anime eyes, disney style, glossy rendering, polished digital painting, hyper realistic skin, fantasy pinup, mobile game art, sharp vector lineart, neon colors, overly saturated colors, cinematic realism, perfect symmetry, giant eyes, plastic texture, 3d render, ai face, photorealistic portrait, ornate tarot frame, decorative text, watermark, logo, clean modern illustration, high detail rendering, cute chibi style",
-        num_outputs: 1,
-        aspect_ratio: "3:4",
-        output_format: "webp",
-        output_quality: 85,
-        num_inference_steps: 28,
-      }
-    });
+const output = await replicate.run("prunaai/z-image", {
+  input: {
+    prompt,
+    negative_prompt: "anime, disney, pixar, manga, cute face, glossy skin, giant eyes, fantasy waifu, mobile game art, polished digital painting, hyper detailed face, cinematic portrait, perfect symmetry, shiny rendering, vibrant colors, photorealism, 3d render, ai generated girl, glamorous fantasy character, sharp vector illustration",
+    num_outputs: 1,
+    aspect_ratio: "3:4",
+    output_format: "webp",
+    output_quality: 85,
+  }
+});
 
     let tempUrl = null;
     if (Array.isArray(output)) {
