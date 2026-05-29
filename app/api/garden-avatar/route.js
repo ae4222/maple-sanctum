@@ -9,8 +9,8 @@ export async function POST(req) {
 
 const prompt = `portrait of a ${witchType} witch, 
 ${hair} hair, ${aesthetic} aesthetic, with a ${familiar} familiar, 
-dark fantasy portrait, moody cinematic lighting, gritty texture, 
-magical atmosphere, detailed face, high contrast,
+storybook illustration, whimsical hand-drawn feel, 
+magical atmosphere, detailed face, soft warm lighting,
 centered composition, upper body portrait,
 no text, no words, no letters, no frame, no border`;
 
