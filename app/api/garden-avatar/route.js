@@ -14,7 +14,7 @@ limited muted color palette, faded teal and moss green tones, dusty terracotta a
 aged cream paper texture, layered soy ink printing, imperfect ink registration, 
 grainy recycled paper, hand-drawn linework, flat graphic shading, 
 simplified facial structure, small realistic eyes, understated facial features, non-glamorous character design, 
-surreal botanical symbolism, poetic and mysterious atmosphere, analog printmaking aesthetic, witchcore, goblincore,
+surreal botanical symbolism, poetic and mysterious atmosphere, analog printmaking aesthetic,
 weathered vintage imperfections, cozy occult zine feeling, artisan handmade print quality, 
 centered composition`;
 
