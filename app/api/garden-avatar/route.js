@@ -24,14 +24,11 @@ const output = await replicate.run("black-forest-labs/flux-1.1-pro", {
     aspect_ratio: "3:4",
     output_format: "webp",
     output_quality: 85,
+    safety_tolerance: 2,
   }
 });
 
-    let tempUrl = null;
-    if (Array.isArray(output)) {
-      const item = output[0];
-      tempUrl = typeof item === "string" ? item : item?.url?.() ?? String(item);
-    }
+let tempUrl = typeof output === "string" ? output : Array.isArray(output) ? output[0] : String(output);
 
     const imgRes = await fetch(tempUrl);
     const imgBuffer = await imgRes.arrayBuffer();
