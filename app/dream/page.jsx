@@ -6,22 +6,6 @@ import { createClient } from "@supabase/supabase-js";
 const font = "'EB Garamond', Garamond, Georgia, serif";
 const WEEK_KEY = "dream_week";
 const WEEK_LIMIT = 3;
-export default function DreamPage() {
-  const { data: session } = useSession();
-  const isMember = session?.user?.is_member || false;
-
-  const [tab, setTab] = useState("journal");
-  const [dreamText, setDreamText] = useState("");
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [dreamUsed, setDreamUsed] = useState(0);
-  const [dreams, setDreams] = useState([]);
-  const [selectedDream, setSelectedDream] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [convoMessages, setConvoMessages] = useState([]); 
-  const [convoInput, setConvoInput] = useState("");        
-  const [convoLoading, setConvoLoading] = useState(false); 
 
 function getSupabase() {
   return createClient(
@@ -30,7 +14,6 @@ function getSupabase() {
   );
 }
 
-// ── Check weekly limit ────────────────────────────────────────
 function getWeekString() {
   const now = new Date();
   const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -59,21 +42,15 @@ function addDreamUsed() {
   } catch { return 0; }
 }
 
-// ── Ask Maple ─────────────────────────────────────────────────
 async function interpretDream(dreamText) {
   const res = await fetch("/api/maple", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type: "dream",
-      payload: { dream: dreamText }
-    }),
+    body: JSON.stringify({ type: "dream", payload: { dream: dreamText } }),
   });
-  const data = await res.json();
-  return data;
+  return await res.json();
 }
 
-// ── Components ────────────────────────────────────────────────
 function SymbolCard({ symbol }) {
   return (
     <div style={{
@@ -91,15 +68,13 @@ function SymbolCard({ symbol }) {
 
 function DreamCard({ dream, onClick }) {
   const date = new Date(dream.created_at).toLocaleDateString("en-GB", {
-    day:"numeric", month:"long", year:"numeric" ,
-     timeZone: "UTC",   
+    day:"numeric", month:"long", year:"numeric", timeZone: "UTC",
   });
   const symbols = JSON.parse(dream.symbols || "[]");
   return (
     <div onClick={onClick} style={{
       background:"#ffffff05", border:"1px solid #c9a84c22",
-      borderRadius:14, padding:"18px 22px", cursor:"pointer",
-      transition:"all .3s",
+      borderRadius:14, padding:"18px 22px", cursor:"pointer", transition:"all .3s",
     }}
     onMouseEnter={e => e.currentTarget.style.border="1px solid #c9a84c55"}
     onMouseLeave={e => e.currentTarget.style.border="1px solid #c9a84c22"}
@@ -117,12 +92,11 @@ function DreamCard({ dream, onClick }) {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────
 export default function DreamPage() {
   const { data: session } = useSession();
   const isMember = session?.user?.is_member || false;
 
-  const [tab, setTab] = useState("journal"); // journal | archive
+  const [tab, setTab] = useState("journal");
   const [dreamText, setDreamText] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -131,130 +105,111 @@ export default function DreamPage() {
   const [selectedDream, setSelectedDream] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [convoMessages, setConvoMessages] = useState([]);
+  const [convoInput, setConvoInput] = useState("");
+  const [convoLoading, setConvoLoading] = useState(false);
 
-  useEffect(() => {
-    setDreamUsed(getDreamUsed());
-  }, []);
-
-  useEffect(() => {
-    if (tab === "archive" && session) loadDreams();
-  }, [tab, session]);
+  useEffect(() => { setDreamUsed(getDreamUsed()); }, []);
+  useEffect(() => { if (tab === "archive" && session) loadDreams(); }, [tab, session]);
 
   async function loadDreams() {
     const supabase = getSupabase();
-    const { data } = await supabase
-      .from("dreams")
-      .select("*")
-      .eq("email", session.user.email)
-      .order("created_at", { ascending: false });
+    const { data } = await supabase.from("dreams").select("*")
+      .eq("email", session.user.email).order("created_at", { ascending: false });
     if (data) setDreams(data);
   }
 
   async function handleInterpret() {
     if (!dreamText.trim()) return;
     if (!isMember && getDreamUsed() >= WEEK_LIMIT) return;
-
     setLoading(true);
     setResult(null);
     setSaved(false);
     setConvoMessages([]);
-
     if (!isMember) addDreamUsed();
     setDreamUsed(getDreamUsed());
-
     const data = await interpretDream(dreamText);
     setResult(data);
     setLoading(false);
+    if (data.interpretation) {
+      try {
+        const imgRes = await fetch("/api/dream-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dream: dreamText, symbols: data.symbols }),
+        });
+        const imgData = await imgRes.json();
+        if (imgData.imageUrl) setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }));
+      } catch (e) { console.error("Image gen error:", e); }
+    }
+  }
 
-// Generate image
-if (data.interpretation) {
-  try {
-    const imgRes = await fetch("/api/dream-image", {
+  async function handleSave() {
+    if (!session || !result) return;
+    setSaving(true);
+    const supabase = getSupabase();
+    await supabase.from("dreams").insert({
+      email: session.user.email,
+      dream_text: dreamText,
+      interpretation: result.interpretation,
+      symbols: JSON.stringify(result.symbols),
+      note: result.note,
+      image_url: result.imageUrl ?? null,
+    });
+    setSaving(false);
+    setSaved(true);
+  }
+
+  async function handleConvo() {
+    if (!convoInput.trim()) return;
+    const userMsg = { role: "user", content: convoInput };
+    setConvoMessages(prev => [...prev, userMsg]);
+    setConvoInput("");
+    setConvoLoading(true);
+    const res = await fetch("/api/maple", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        dream: dreamText, 
-        symbols: data.symbols 
+      body: JSON.stringify({
+        type: "dream-convo",
+        payload: {
+          dream: dreamText,
+          interpretation: result.interpretation,
+          symbols: result.symbols,
+          messages: [...convoMessages, userMsg],
+        }
       }),
     });
-    const imgData = await imgRes.json();
-    if (imgData.imageUrl) {
-      setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }));
-    }
-  } catch (e) {
-    console.error("Image gen error:", e);
+    const data = await res.json();
+    setConvoMessages(prev => [...prev, { role: "assistant", content: data.text }]);
+    setConvoLoading(false);
   }
-}
-  }
-async function handleSave() {
-  if (!session || !result) return;
-  setSaving(true);
-  const supabase = getSupabase();
-  await supabase.from("dreams").insert({
-    email: session.user.email,
-    dream_text: dreamText,
-    interpretation: result.interpretation,
-    symbols: JSON.stringify(result.symbols),
-    note: result.note,
-    image_url: result.imageUrl ?? null, 
-  });
-  setSaving(false);
-  setSaved(true);
-}
-async function handleConvo() {
-  if (!convoInput.trim()) return;
-  const userMsg = { role: "user", content: convoInput };
-  setConvoMessages(prev => [...prev, userMsg]);
-  setConvoInput("");
-  setConvoLoading(true);
 
-  const res = await fetch("/api/maple", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type: "dream-convo",
-      payload: {
-        dream: dreamText,
-        interpretation: result.interpretation,
-        symbols: result.symbols,
-        messages: [...convoMessages, userMsg],
-      }
-    }),
-  });
-  const data = await res.json();
-  setConvoMessages(prev => [...prev, { role: "assistant", content: data.text }]);
-  setConvoLoading(false);
-}
   const canInterpret = isMember || dreamUsed < WEEK_LIMIT;
 
   return (
     <div style={{ minHeight:"100vh", background:"#0a0514", color:"#e8d5c4", padding:"40px 24px", fontFamily:font }}>
       <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
-
       <div style={{ maxWidth:760, margin:"0 auto" }}>
 
-        {/* Header */}
         <button onClick={() => window.location.href = "/oracle"} style={{
-  background:"none", border:"none", color:"#8b7355",
-  cursor:"pointer", marginBottom:28, fontSize:17, fontFamily:font,
-}}>← Back</button>
+          background:"none", border:"none", color:"#8b7355",
+          cursor:"pointer", marginBottom:28, fontSize:17, fontFamily:font,
+        }}>← Back</button>
+
         <div style={{ textAlign:"center", marginBottom:40 }}>
           <div style={{ fontSize:44, color:"#c9a84c", letterSpacing:4, marginBottom:10 }}>🌙 DREAM JOURNAL</div>
           <div style={{ color:"#8b7355", fontSize:18, fontStyle:"italic" }}>tell Maple what the night showed you</div>
         </div>
 
-        {/* Tabs */}
         <div style={{ display:"flex", gap:0, marginBottom:32, border:"1px solid #c9a84c22", borderRadius:12, overflow:"hidden" }}>
           {[
-  { key:"journal", label:"✦ Interpret" },
-  { key:"archive", label:"📖 Archive" },
-].map(t => (
- <button key={t.key} onClick={() => {
-  setTab(t.key);
-  setResult(null);
-  setSelectedDream(null);
-}} style={{
-  }} style={{
+            { key:"journal", label:"✦ Interpret" },
+            { key:"archive", label:"📖 Archive" },
+          ].map(t => (
+            <button key={t.key} onClick={() => {
+              setTab(t.key);
+              if (t.key === "archive") { setResult(null); setSelectedDream(null); }
+            }} style={{
               flex:1, padding:"14px", border:"none", cursor:"pointer",
               background: tab === t.key ? "#c9a84c18" : "transparent",
               color: tab === t.key ? "#c9a84c" : "#8b7355",
@@ -265,27 +220,18 @@ async function handleConvo() {
           ))}
         </div>
 
-        {/* ── JOURNAL TAB ── */}
         {tab === "journal" && (
           <div>
-            {/* Status */}
-            <div style={{
-              display:"flex", justifyContent:"space-between", alignItems:"center",
-              marginBottom:20, fontSize:13, color:"#8b7355",
-            }}>
-              <span>
-                {isMember ? "✦ Coven Member — unlimited" : `${dreamUsed}/${WEEK_LIMIT} interpretation this week`}
-              </span>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20, fontSize:13, color:"#8b7355" }}>
+              <span>{isMember ? "✦ Coven Member — unlimited" : `${dreamUsed}/${WEEK_LIMIT} interpretation this week`}</span>
               {!session && (
                 <button onClick={() => signIn("google")} style={{
                   background:"none", border:"1px solid #c9a84c44", color:"#c9a84c",
-                  borderRadius:8, padding:"6px 14px", cursor:"pointer",
-                  fontSize:13, fontFamily:font,
+                  borderRadius:8, padding:"6px 14px", cursor:"pointer", fontSize:13, fontFamily:font,
                 }}>Login to save →</button>
               )}
             </div>
 
-            {/* Input */}
             <div style={{ marginBottom:16 }}>
               <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:10 }}>YOUR DREAM</div>
               <textarea
@@ -296,9 +242,8 @@ async function handleConvo() {
                   width:"100%", minHeight:160,
                   background:"#ffffff08", border:"1px solid #c9a84c44",
                   borderRadius:12, padding:18, color:"#e8d5c4",
-                  fontSize:17, fontFamily:font,
-                  resize:"vertical", outline:"none", boxSizing:"border-box",
-                  lineHeight:1.8,
+                  fontSize:17, fontFamily:font, resize:"vertical", outline:"none",
+                  boxSizing:"border-box", lineHeight:1.8,
                 }}
               />
             </div>
@@ -307,48 +252,34 @@ async function handleConvo() {
               <div style={{ textAlign:"center", padding:"16px", border:"1px solid #c9a84c33", borderRadius:12, marginBottom:16, color:"#8b7355", fontSize:15, fontFamily:font }}>
                 Weekly limit reached. Members interpret without limit.
                 <a href="https://ko-fi.com/witchgarden/tiers" target="_blank" rel="noreferrer"
-                  style={{ color:"#c9a84c", marginLeft:8, textDecoration:"none" }}>
-                  Join the Coven →
-                </a>
+                  style={{ color:"#c9a84c", marginLeft:8, textDecoration:"none" }}>Join the Coven →</a>
               </div>
             )}
 
-            <button
-              onClick={handleInterpret}
-              disabled={!dreamText.trim() || !canInterpret || loading}
-              style={{
-                width:"100%", padding:"18px",
-                background: dreamText.trim() && canInterpret && !loading
-                  ? "linear-gradient(135deg,#2d1b4e,#4a2080)"
-                  : "#ffffff10",
-                border:"none", borderRadius:12,
-                color: dreamText.trim() && canInterpret ? "#e8d5c4" : "#ffffff33",
-                fontFamily:font, fontSize:18, letterSpacing:3, cursor: canInterpret ? "pointer" : "not-allowed",
-                marginBottom:32,
-              }}
-            >
+            <button onClick={handleInterpret} disabled={!dreamText.trim() || !canInterpret || loading} style={{
+              width:"100%", padding:"18px",
+              background: dreamText.trim() && canInterpret && !loading ? "linear-gradient(135deg,#2d1b4e,#4a2080)" : "#ffffff10",
+              border:"none", borderRadius:12,
+              color: dreamText.trim() && canInterpret ? "#e8d5c4" : "#ffffff33",
+              fontFamily:font, fontSize:18, letterSpacing:3,
+              cursor: canInterpret ? "pointer" : "not-allowed", marginBottom:32,
+            }}>
               {loading ? "Maple reads the mist..." : "INTERPRET THIS DREAM"}
             </button>
 
-            {/* Result */}
             {result && (
               <div style={{ animation:"fadeUp .6s both" }}>
-{/* Image */}
-{result.imageUrl && (
-  <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
-    <img src={result.imageUrl} alt="dream illustration"
-      style={{ width:"100%", height:"auto", display:"block" }}
-    />
-  </div>
+                {result.imageUrl && (
+                  <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
+                    <img src={result.imageUrl} alt="dream illustration" style={{ width:"100%", height:"auto", display:"block" }}/>
+                  </div>
+                )}
 
-)}
-                {/* Interpretation */}
                 <div style={{ background:"#ffffff06", border:"1px solid #c9a84c33", borderRadius:16, padding:28, marginBottom:20 }}>
                   <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>MAPLE READS</div>
                   <p style={{ lineHeight:2, fontSize:18, margin:0, color:"#e8d5c4" }}>{result.interpretation}</p>
                 </div>
 
-                {/* Symbols */}
                 {result.symbols?.length > 0 && (
                   <div style={{ marginBottom:20 }}>
                     <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>SYMBOLS IN YOUR DREAM</div>
@@ -358,78 +289,62 @@ async function handleConvo() {
                   </div>
                 )}
 
-                {/* Maple's note */}
                 {result.note && (
-                  <div style={{
-                    borderTop:"1px solid #c9a84c22", paddingTop:20, marginBottom:24,
-                    textAlign:"center", fontStyle:"italic", fontSize:17, color:"#c9b994aa",
-                    fontFamily:font,
-                  }}>
+                  <div style={{ borderTop:"1px solid #c9a84c22", paddingTop:20, marginBottom:24, textAlign:"center", fontStyle:"italic", fontSize:17, color:"#c9b994aa", fontFamily:font }}>
                     "{result.note}"
                   </div>
                 )}
-{/* Dream Conversation */}
-<div style={{ marginBottom:24 }}>
-  <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>
-    ASK MAPLE
-  </div>
 
-  {convoMessages.map((m, i) => (
-    <div key={i} style={{
-      marginBottom:12,
-      display:"flex",
-      justifyContent: m.role === "user" ? "flex-end" : "flex-start",
-    }}>
-      <div style={{
-        maxWidth:"80%", padding:"12px 16px",
-        borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-        background: m.role === "user" ? "#2d1b4e" : "#ffffff08",
-        border: m.role === "user" ? "none" : "1px solid #c9a84c22",
-        color: "#e8d5c4", fontSize:16, fontFamily:font, lineHeight:1.8,
-      }}>
-        {m.role === "assistant" && (
-          <div style={{ fontSize:11, color:"#c9a84c", letterSpacing:2, marginBottom:6 }}>MAPLE</div>
-        )}
-        {m.content}
-      </div>
-    </div>
-  ))}
+                {/* Dream Conversation */}
+                <div style={{ marginBottom:24 }}>
+                  <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>ASK MAPLE</div>
+                  {convoMessages.map((m, i) => (
+                    <div key={i} style={{ marginBottom:12, display:"flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+                      <div style={{
+                        maxWidth:"80%", padding:"12px 16px",
+                        borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                        background: m.role === "user" ? "#2d1b4e" : "#ffffff08",
+                        border: m.role === "user" ? "none" : "1px solid #c9a84c22",
+                        color:"#e8d5c4", fontSize:16, fontFamily:font, lineHeight:1.8,
+                      }}>
+                        {m.role === "assistant" && (
+                          <div style={{ fontSize:11, color:"#c9a84c", letterSpacing:2, marginBottom:6 }}>MAPLE</div>
+                        )}
+                        {m.content}
+                      </div>
+                    </div>
+                  ))}
+                  {convoLoading && (
+                    <div style={{ color:"#8b7355", fontSize:14, fontFamily:font, fontStyle:"italic", marginBottom:12 }}>
+                      Maple listens to the mist...
+                    </div>
+                  )}
+                  <div style={{ display:"flex", gap:8, marginTop:8 }}>
+                    <input
+                      value={convoInput}
+                      onChange={e => setConvoInput(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && handleConvo()}
+                      placeholder="Ask Maple about your dream..."
+                      style={{
+                        flex:1, padding:"12px 16px",
+                        background:"#ffffff08", border:"1px solid #c9a84c44",
+                        borderRadius:10, color:"#e8d5c4", fontSize:15, fontFamily:font, outline:"none",
+                      }}
+                    />
+                    <button onClick={handleConvo} disabled={!convoInput.trim() || convoLoading} style={{
+                      padding:"12px 20px",
+                      background: convoInput.trim() ? "linear-gradient(135deg,#2d1b4e,#4a2080)" : "#ffffff10",
+                      border:"none", borderRadius:10,
+                      color: convoInput.trim() ? "#e8d5c4" : "#ffffff33",
+                      fontFamily:font, fontSize:15, cursor:"pointer",
+                    }}>✦</button>
+                  </div>
+                </div>
 
-  {convoLoading && (
-    <div style={{ color:"#8b7355", fontSize:14, fontFamily:font, fontStyle:"italic", marginBottom:12 }}>
-      Maple listens to the mist...
-    </div>
-  )}
-
-  <div style={{ display:"flex", gap:8, marginTop:8 }}>
-    <input
-      value={convoInput}
-      onChange={e => setConvoInput(e.target.value)}
-      onKeyDown={e => e.key === "Enter" && handleConvo()}
-      placeholder="Ask Maple about your dream..."
-      style={{
-        flex:1, padding:"12px 16px",
-        background:"#ffffff08", border:"1px solid #c9a84c44",
-        borderRadius:10, color:"#e8d5c4",
-        fontSize:15, fontFamily:font, outline:"none",
-      }}
-    />
-    <button onClick={handleConvo} disabled={!convoInput.trim() || convoLoading} style={{
-      padding:"12px 20px",
-      background: convoInput.trim() ? "linear-gradient(135deg,#2d1b4e,#4a2080)" : "#ffffff10",
-      border:"none", borderRadius:10,
-      color: convoInput.trim() ? "#e8d5c4" : "#ffffff33",
-      fontFamily:font, fontSize:15, cursor:"pointer",
-    }}>✦</button>
-  </div>
-</div>
-                {/* Save button */}
                 {session && !saved && (
                   <button onClick={handleSave} disabled={saving} style={{
-                    width:"100%", padding:"14px",
-                    background:"none", border:"1px solid #c9a84c55",
-                    borderRadius:12, color:"#c9a84c",
-                    fontFamily:font, fontSize:16, letterSpacing:2, cursor:"pointer",
+                    width:"100%", padding:"14px", background:"none", border:"1px solid #c9a84c55",
+                    borderRadius:12, color:"#c9a84c", fontFamily:font, fontSize:16, letterSpacing:2, cursor:"pointer",
                   }}>
                     {saving ? "Saving..." : "✦ Save to Archive"}
                   </button>
@@ -452,23 +367,17 @@ async function handleConvo() {
           </div>
         )}
 
-        {/* ── ARCHIVE TAB ── */}
         {tab === "archive" && (
           <div>
             {!session ? (
               <div style={{ textAlign:"center", padding:"48px 24px" }}>
                 <div style={{ fontSize:32, marginBottom:16 }}>🌙</div>
-                <div style={{ fontSize:18, color:"#8b7355", fontFamily:font, marginBottom:20 }}>
-                  Login to view your dream archive
-                </div>
+                <div style={{ fontSize:18, color:"#8b7355", fontFamily:font, marginBottom:20 }}>Login to view your dream archive</div>
                 <button onClick={() => signIn("google")} style={{
                   background:"#c9a84c", color:"#1a0800", border:"none",
-                  borderRadius:10, padding:"12px 28px", cursor:"pointer",
-                  fontFamily:font, fontSize:16, letterSpacing:1,
-                }}>
-                  Continue with Google
-                </button>
-             </div>
+                  borderRadius:10, padding:"12px 28px", cursor:"pointer", fontFamily:font, fontSize:16, letterSpacing:1,
+                }}>Continue with Google</button>
+              </div>
             ) : selectedDream ? (
               <div>
                 <button onClick={() => setSelectedDream(null)} style={{
@@ -477,17 +386,12 @@ async function handleConvo() {
                 }}>← Back to archive</button>
 
                 <div style={{ fontSize:12, color:"#8b7355", letterSpacing:2, marginBottom:16 }}>
-                  {new Date(selectedDream.created_at).toLocaleDateString("en-GB", { 
-                    day:"numeric", month:"long", year:"numeric",
-                    timeZone: "UTC",
-                  })}
+                  {new Date(selectedDream.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric", timeZone:"UTC" })}
                 </div>
 
                 {selectedDream.image_url && (
                   <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
-                    <img src={selectedDream.image_url} alt="dream illustration"
-                      style={{ width:"100%", height:"auto", display:"block" }}
-                    />
+                    <img src={selectedDream.image_url} alt="dream illustration" style={{ width:"100%", height:"auto", display:"block" }}/>
                   </div>
                 )}
 
