@@ -28,7 +28,15 @@ const output = await replicate.run("black-forest-labs/flux-1.1-pro", {
   }
 });
 
-let tempUrl = typeof output === "string" ? output : Array.isArray(output) ? output[0] : String(output);
+console.log("output type:", typeof output);
+console.log("output:", output);
+
+let tempUrl = typeof output === "string" ? output 
+  : output?.url ? output.url() 
+  : Array.isArray(output) ? output[0] 
+  : String(output);
+
+console.log("tempUrl:", tempUrl);
 
     const imgRes = await fetch(tempUrl);
     const imgBuffer = await imgRes.arrayBuffer();
