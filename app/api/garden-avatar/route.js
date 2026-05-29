@@ -9,8 +9,8 @@ export async function POST(req) {
 
     const prompt = `portrait of a ${witchType} witch named ${witchName}, 
 ${hair} hair, ${aesthetic} aesthetic, with a ${familiar} familiar, 
-anime digital illustration, soft line art, vibrant and luminous colors, 
-gentle magical glow, clean cell shading, cute expressive features,
+tarot card art style, art nouveau composition, ornate gilded borders, 
+symbolic flat illustration, muted color palette, intricate filigree,
 no text, no words, no letters`;
 
     const output = await replicate.run("black-forest-labs/flux-dev", {
