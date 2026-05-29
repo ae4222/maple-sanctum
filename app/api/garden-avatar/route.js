@@ -28,16 +28,6 @@ const output = await replicate.run("black-forest-labs/flux-dev", {
   }
 });
 
-    const output = await replicate.run("black-forest-labs/flux-dev", {
-      input: {
-        prompt,
-        num_outputs: 1,
-        aspect_ratio: "3:4",
-        output_format: "webp",
-        output_quality: 85,
-        num_inference_steps: 28,
-      }
-    });
 
     let tempUrl = null;
     if (Array.isArray(output)) {
