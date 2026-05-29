@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { useSession, signIn } from "next-auth/react";
-import { createClient } from "@supabase/supabase-js";
 
 const font = "'EB Garamond', Garamond, Georgia, serif";
 
@@ -11,13 +10,6 @@ const OPTIONS = {
   hair: ["Silver", "Auburn", "Midnight", "Rose", "Wild"],
   aesthetic: ["Cottagecore", "Dark Academic", "Celestial", "Botanical"],
 };
-
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? ""
-  );
-}
 
 export default function GardenSetupPage() {
   const { data: session } = useSession();
@@ -52,32 +44,22 @@ export default function GardenSetupPage() {
     if (!session || !previewUrl) return;
     setSaving(true);
 
-    const supabase = getSupabase();
-
-    // check founder number
-    const { count } = await supabase
-      .from("garden_members")
-      .select("*", { count: "exact", head: true });
-
-    const founderNumber = count < 50 ? count + 1 : null;
-    const isFounder = founderNumber !== null;
-
-    await supabase.from("garden_members").upsert({
-      email: session.user.email,
-      witch_name: witchName,
-      witch_type: witchType,
-      familiar,
-      hair,
-      aesthetic,
-      avatar_url: previewUrl,
-      is_founder: isFounder,
-      founder_number: founderNumber,
-      is_active: true,
+    const res = await fetch("/api/garden-save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        witchName, witchType, familiar, hair, aesthetic,
+        avatarUrl: previewUrl,
+      }),
     });
 
+    const data = await res.json();
     setSaving(false);
-    setDone(true);
-    setTimeout(() => window.location.href = "/garden", 1500);
+
+    if (!data.error) {
+      setDone(true);
+      setTimeout(() => window.location.href = "/garden", 1500);
+    }
   }
 
   if (!session) {
@@ -115,7 +97,6 @@ export default function GardenSetupPage() {
           <div style={{ color:"#8b7355", fontSize:18, fontStyle:"italic" }}>create your witch card</div>
         </div>
 
-        {/* Witch Name */}
         <div style={{ marginBottom:28 }}>
           <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:10 }}>YOUR WITCH NAME</div>
           <input
@@ -131,7 +112,6 @@ export default function GardenSetupPage() {
           />
         </div>
 
-        {/* Selectors */}
         {[
           { key:"witchType", label:"WITCH TYPE", state: witchType, set: setWitchType },
           { key:"familiar", label:"FAMILIAR", state: familiar, set: setFamiliar },
@@ -155,7 +135,6 @@ export default function GardenSetupPage() {
           </div>
         ))}
 
-        {/* Preview */}
         {previewUrl && (
           <div style={{ marginBottom:24, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c33", maxWidth:300, margin:"0 auto 24px" }}>
             <img src={previewUrl} style={{ width:"100%", display:"block" }} alt="witch avatar"/>
@@ -166,7 +145,6 @@ export default function GardenSetupPage() {
           </div>
         )}
 
-        {/* Generate button */}
         <button onClick={handleGenerate} disabled={!allSelected || generating} style={{
           width:"100%", padding:"16px",
           background: allSelected && !generating ? "linear-gradient(135deg,#2d1b4e,#4a2080)" : "#ffffff10",
@@ -178,7 +156,6 @@ export default function GardenSetupPage() {
           {generating ? "Maple weaves your portrait..." : "✦ GENERATE MY WITCH CARD"}
         </button>
 
-        {/* Save button */}
         {previewUrl && (
           <button onClick={handleSave} disabled={saving} style={{
             width:"100%", padding:"16px",
