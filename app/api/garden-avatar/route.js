@@ -7,16 +7,23 @@ export async function POST(req) {
 
    const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
-const prompt = `storybook illustration, witch portrait, ${witchType} witch with ${familiar} familiar,
-hand-painted with watercolor and ink, antique botanical print influence,
-subtle art nouveau frame, aged parchment texture, ink stains, gold leaf accents worn and imperfect,
-deep forest teal palette with muted green and brass, soft candlelit mood,
-expressive face, natural asymmetry, handcrafted details, cozy mystical atmosphere,
-${hair} hair, ${aesthetic} aesthetic,
-upper body portrait, centered composition,
-no text, no words, no letters`;
+const aestheticMap = {
+  "Cottagecore": "soft warm earth tones, dried flowers, linen textures",
+  "Dark Academic": "deep burgundy and forest green, candlelight, old books",
+  "Celestial": "deep midnight blue, silver stars, moon glow",
+  "Botanical": "lush green foliage, ink botanical sketches, paper texture",
+};
 
-const output = await replicate.run("krea-ai/krea", {
+const prompt = `watercolor and ink portrait, ${witchType} witch, 
+${hair} hair, ${familiar} familiar beside her,
+${aestheticMap[aesthetic] || aesthetic},
+aged parchment background, loose expressive brushwork,
+botanical manuscript margins, soft candlelit atmosphere,
+muted earth tones, natural asymmetrical face,
+upper body centered composition,
+no text, no words, no frame, no border`;
+
+const output = await replicate.run("black-forest-labs/flux-dev", {
   input: {
     prompt,
     negative_prompt: "3d render, plastic skin, overly symmetrical, perfect face, high saturation, clean digital lineart, generic tarot style",
