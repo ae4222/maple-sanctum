@@ -115,20 +115,21 @@ export default function GardenEditPage() {
   }
 }
 
-  if (!session) {
-    return (
-      <div style={{ minHeight:"100vh", background:"#0a0514", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:font }}>
-        <div style={{ textAlign:"center" }}>
-          <div style={{ fontSize:32, marginBottom:16 }}>🌿</div>
-          <div style={{ color:"#8b7355", fontSize:18, marginBottom:20 }}>Login to edit your profile</div>
-          <button onClick={() => signIn("google")} style={{
-            background:"#c9a84c", color:"#1a0800", border:"none",
-            borderRadius:10, padding:"12px 28px", cursor:"pointer", fontFamily:font, fontSize:16,
-          }}>Continue with Google</button>
-        </div>
+  if (!session || !isMember) {
+  return (
+    <div style={{ minHeight:"100vh", background:"#0a0514", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:font }}>
+      <div style={{ textAlign:"center" }}>
+        <div style={{ fontSize:32, marginBottom:16 }}>🌿</div>
+        <div style={{ color:"#8b7355", fontSize:18, marginBottom:20 }}>Coven members only</div>
+        <a href="https://ko-fi.com/witchgarden/tiers" target="_blank" rel="noreferrer" style={{
+          background:"#c9a84c", color:"#1a0800", border:"none",
+          borderRadius:10, padding:"12px 28px", cursor:"pointer", fontFamily:font, fontSize:16,
+          textDecoration:"none",
+        }}>✦ Join the Coven</a>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (done) {
     return (
