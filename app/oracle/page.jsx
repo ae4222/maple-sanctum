@@ -123,6 +123,43 @@ function LimitReached({ type }) {
     </div>
   );
 }
+function ServiceCard({ image, title, cta, onClick, disabled }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div onClick={!disabled ? onClick : undefined}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        position:"relative", borderRadius:18, overflow:"hidden",
+        minHeight:300, cursor: disabled ? "not-allowed" : "pointer",
+        flex:1, minWidth:260,
+        border: hover && !disabled ? "1px solid #c9a84c88" : "1px solid #c9a84c22",
+        transform: hover && !disabled ? "translateY(-4px)" : "none",
+        opacity: disabled ? 0.6 : 1,
+        transition:"all .3s",
+      }}
+    >
+      <img src={image} alt={title}
+        style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", zIndex:1 }}
+        onError={e => e.target.style.display="none"}
+      />
+      <div style={{ position:"absolute", inset:0, zIndex:0, background:"radial-gradient(circle at 50% 30%, #2d1b4e, #0a0514)" }}/>
+      <div style={{ position:"absolute", inset:0, zIndex:2, background:"linear-gradient(to top, rgba(10,5,20,0.4) 10%, rgba(10,5,20,0.0))" }}/>
+      <div style={{ position:"relative", zIndex:3, padding:"28px", height:"100%", display:"flex", flexDirection:"column", justifyContent:"flex-end" }}>
+        {disabled && <div style={{ fontSize:13, color:"#e88a8a", marginBottom:8, fontFamily:font }}>Daily limit reached</div>}
+        <div style={{
+          display:"inline-flex", alignItems:"center", gap:8,
+          background: disabled ? "#ffffff22" : "#c9a84c",
+          color: disabled ? "#ffffff66" : "#1a0800",
+          padding:"12px 22px", borderRadius:10,
+          fontSize:16, fontFamily:font, letterSpacing:1, width:"fit-content",
+        }}>
+          {disabled ? "Limit reached" : `${cta} →`}
+        </div>
+      </div>
+    </div>
+  );
+}
 function HeroBanner({ tarotUsed, pendulumUsed, isMember, session }) {
   return (
     <div style={{
