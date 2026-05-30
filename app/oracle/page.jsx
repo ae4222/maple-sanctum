@@ -304,11 +304,11 @@ async function doPendulum() {
   const ans = Math.random() > 0.5 ? "yes" : "no";
   setPendulumAns(ans); setPendulumSwing(true); setPendulumMsg("");
   setLoading(true);
+  const msg = await askMaple("pendulum", { question, answer: ans });
   if (!isMember) {
     const next = addUsed("pendulum");
     setPendulumUsed(next);
   }
-  const msg = await askMaple("pendulum", { question, answer: ans });
   setPendulumMsg(msg); setLoading(false);
   setTimeout(() => setPendulumSwing(false), 4000);
 }

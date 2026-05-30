@@ -64,7 +64,7 @@ export default function GardenEditPage() {
     }
   }
 
-  const canGen = genThisMonth < 3;
+  const canGen = genThisMonth < 4;
 
   async function handleGenerate() {
     if (!canGen) return;
@@ -153,7 +153,7 @@ export default function GardenEditPage() {
         <div style={{ textAlign:"center", marginBottom:40 }}>
           <div style={{ fontSize:40, color:"#c9a84c", letterSpacing:4, marginBottom:10 }}>🌿 EDIT PROFILE</div>
           <div style={{ color:"#8b7355", fontSize:15, fontStyle:"italic" }}>
-            {canGen ? `${3 - genThisMonth} image regeneration${3 - genThisMonth !== 1 ? "s" : ""} remaining this month` : "No regenerations remaining this month"}
+            {canGen ? `${4 - genThisMonth} image regeneration${4 - genThisMonth !== 1 ? "s" : ""} remaining this month` : "No regenerations remaining this month"}
           </div>
         </div>
 

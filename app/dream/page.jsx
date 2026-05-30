@@ -120,30 +120,35 @@ export default function DreamPage() {
   }
 
   async function handleInterpret() {
-    if (!dreamText.trim()) return;
-    if (!isMember && getDreamUsed() >= WEEK_LIMIT) return;
-    setLoading(true);
-    setResult(null);
-    setSaved(false);
-    setConvoMessages([]);
-    if (!isMember) addDreamUsed();
-    setDreamUsed(getDreamUsed());
-    const data = await interpretDream(dreamText);
-    setResult(data);
-    setLoading(false);
-    if (data.interpretation) {
-      try {
-        const imgRes = await fetch("/api/dream-image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dream: dreamText, symbols: data.symbols }),
-        });
-        const imgData = await imgRes.json();
-        if (imgData.imageUrl) setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }));
-      } catch (e) { console.error("Image gen error:", e); }
-    }
+  if (!dreamText.trim()) return;
+  if (!isMember && getDreamUsed() >= WEEK_LIMIT) return;
+  setLoading(true);
+  setResult(null);
+  setSaved(false);
+  setConvoMessages([]);
+
+  const data = await interpretDream(dreamText);
+
+  if (!isMember) {
+    const next = addDreamUsed();
+    setDreamUsed(next);
   }
 
+  setResult(data);
+  setLoading(false);
+
+  if (data.interpretation) {
+    try {
+      const imgRes = await fetch("/api/dream-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dream: dreamText, symbols: data.symbols }),
+      });
+      const imgData = await imgRes.json();
+      if (imgData.imageUrl) setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }));
+    } catch (e) { console.error("Image gen error:", e); }
+  }
+}
   async function handleSave() {
     if (!session || !result) return;
     setSaving(true);
