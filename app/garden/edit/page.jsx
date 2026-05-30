@@ -4,8 +4,7 @@ import { useSession, signIn } from "next-auth/react";
 import { createClient } from "@supabase/supabase-js";
 
 const font = "'EB Garamond', Garamond, Georgia, serif";
-const { data: session } = useSession();
-const isMember = session?.user?.is_member || false;
+
 const OPTIONS = {
   witchType: ["Forest", "Sea", "Swamp", "River", "Moon", "Storm", "Shadow"],
   familiar: ["Cat", "Frog", "Raven", "Fox", "Moth", "Heron", "Owl"],
@@ -22,7 +21,7 @@ function getSupabase() {
 
 export default function GardenEditPage() {
   const { data: session } = useSession();
-
+  const isMember = session?.user?.is_member || false;
   const [profile, setProfile] = useState(null);
   const [witchName, setWitchName] = useState("");
   const [witchType, setWitchType] = useState("");
