@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 
 const font = "'EB Garamond', Garamond, Georgia, serif";
-
+const { data: session } = useSession();
+const isMember = session?.user?.is_member || false;
 const OPTIONS = {
   witchType: ["Forest", "Sea", "Swamp", "River", "Moon", "Storm", "Shadow"],
   familiar: ["Cat", "Frog", "Raven", "Fox", "Moth", "Heron", "Owl"],
