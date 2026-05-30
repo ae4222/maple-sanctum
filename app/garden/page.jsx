@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { createClient } from "@supabase/supabase-js";
 
 const font = "'EB Garamond', Garamond, Georgia, serif";
+const KOFI_TIERS = "https://ko-fi.com/witchgarden/tiers";
 
 function getSupabase() {
   return createClient(
@@ -89,6 +90,7 @@ function WitchCard({ member }) {
 
 export default function GardenPage() {
   const { data: session } = useSession();
+  const isMember = session?.user?.is_member || false;
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [myProfile, setMyProfile] = useState(null);
@@ -123,6 +125,35 @@ export default function GardenPage() {
   const founders = members.filter(m => m.is_founder && !m.is_keeper);
   const regular = members.filter(m => !m.is_founder && !m.is_keeper);
 
+  // ปุ่ม join/edit
+  function JoinButton() {
+    if (myProfile) {
+      return (
+        <button onClick={() => window.location.href = "/garden/edit"} style={{
+          background:"none", border:"1px solid #c9a84c44", color:"#c9a84c",
+          borderRadius:10, padding:"8px 20px", cursor:"pointer", fontFamily:font, fontSize:15,
+        }}>✦ Edit my card</button>
+      );
+    }
+    if (isMember) {
+      return (
+        <button onClick={() => window.location.href = "/garden/setup"} style={{
+          background:"linear-gradient(135deg,#2d1b4e,#4a2080)", border:"none",
+          color:"#e8d5c4", borderRadius:10, padding:"8px 20px",
+          cursor:"pointer", fontFamily:font, fontSize:15,
+        }}>🌿 Create my witch card</button>
+      );
+    }
+    // ไม่ได้เป็น member → ไป Ko-fi
+    return (
+      <a href={KOFI_TIERS} target="_blank" rel="noreferrer" style={{
+        background:"#c9a84c", color:"#1a0800",
+        borderRadius:10, padding:"8px 20px",
+        fontFamily:font, fontSize:15, textDecoration:"none", letterSpacing:1,
+      }}>✦ Join the Coven to enter</a>
+    );
+  }
+
   return (
     <div style={{ minHeight:"100vh", background:"#0a0514", color:"#e8d5c4", padding:"40px 24px", fontFamily:font }}>
       <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
@@ -138,22 +169,9 @@ export default function GardenPage() {
           <div style={{ color:"#8b7355", fontSize:18, fontStyle:"italic" }}>a gathering of witches</div>
         </div>
 
-        {session && (
-          <div style={{ textAlign:"right", marginBottom:32 }}>
-            {myProfile ? (
-              <button onClick={() => window.location.href = "/garden/edit"} style={{
-                background:"none", border:"1px solid #c9a84c44", color:"#c9a84c",
-                borderRadius:10, padding:"8px 20px", cursor:"pointer", fontFamily:font, fontSize:15,
-              }}>✦ Edit my card</button>
-            ) : (
-              <button onClick={() => window.location.href = "/garden/setup"} style={{
-                background:"linear-gradient(135deg,#2d1b4e,#4a2080)", border:"none",
-                color:"#e8d5c4", borderRadius:10, padding:"8px 20px",
-                cursor:"pointer", fontFamily:font, fontSize:15,
-              }}>🌿 Join the Garden</button>
-            )}
-          </div>
-        )}
+        <div style={{ textAlign:"right", marginBottom:32 }}>
+          <JoinButton/>
+        </div>
 
         {loading ? (
           <div style={{ textAlign:"center", color:"#8b7355", fontSize:18, fontStyle:"italic" }}>

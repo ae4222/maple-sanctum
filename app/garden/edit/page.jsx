@@ -83,34 +83,37 @@ export default function GardenEditPage() {
   }
 
   async function handleSave() {
-    if (!session || !profile) return;
-    setSaving(true);
-    const supabase = getSupabase();
+  if (!session || !profile) return;
+  setSaving(true);
 
-    const now = new Date();
-    const lastGen = profile.last_avatar_gen ? new Date(profile.last_avatar_gen) : null;
-    const sameMonth = lastGen &&
-      lastGen.getMonth() === now.getMonth() &&
-      lastGen.getFullYear() === now.getFullYear();
-    const newCount = previewUrl !== profile.avatar_url
-      ? (sameMonth ? (profile.avatar_gen_count || 0) + 1 : 1)
-      : profile.avatar_gen_count || 0;
+  const now = new Date();
+  const lastGen = profile.last_avatar_gen ? new Date(profile.last_avatar_gen) : null;
+  const sameMonth = lastGen &&
+    lastGen.getMonth() === now.getMonth() &&
+    lastGen.getFullYear() === now.getFullYear();
+  const newCount = previewUrl !== profile.avatar_url
+    ? (sameMonth ? (profile.avatar_gen_count || 0) + 1 : 1)
+    : profile.avatar_gen_count || 0;
 
-    await supabase.from("garden_members").update({
-      witch_name: witchName,
-      witch_type: witchType,
-      familiar,
-      hair,
-      aesthetic,
-      avatar_url: previewUrl,
-      last_avatar_gen: previewUrl !== profile.avatar_url ? now.toISOString() : profile.last_avatar_gen,
-      avatar_gen_count: newCount,
-    }).eq("email", session.user.email);
+  const res = await fetch("/api/garden-edit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      witchName, witchType, familiar, hair, aesthetic,
+      avatarUrl: previewUrl,
+      lastAvatarGen: previewUrl !== profile.avatar_url ? now.toISOString() : profile.last_avatar_gen,
+      avatarGenCount: newCount,
+    }),
+  });
 
-    setSaving(false);
+  const data = await res.json();
+  setSaving(false);
+
+  if (!data.error) {
     setDone(true);
     setTimeout(() => window.location.href = "/garden", 1500);
   }
+}
 
   if (!session) {
     return (

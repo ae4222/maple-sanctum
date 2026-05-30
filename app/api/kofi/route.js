@@ -1,50 +1,42 @@
-import NextAuth from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
 import { createClient } from "@supabase/supabase-js";
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SECRET_KEY
-  );
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SECRET_KEY
+);
+
+const VERIFICATION_TOKEN = process.env.KOFI_TOKEN;
+
+export async function POST(req) {
+  const formData = await req.formData();
+  const raw = formData.get("data");
+  
+  if (!raw) return Response.json({ error: "no data" }, { status: 400 });
+
+  const data = JSON.parse(raw);
+
+  // verify token
+  if (VERIFICATION_TOKEN && data.verification_token !== VERIFICATION_TOKEN) {
+    return Response.json({ error: "invalid token" }, { status: 401 });
+  }
+
+  const email = data?.email;
+  const type = data?.type;
+
+  if (!email) return Response.json({ error: "no email" }, { status: 400 });
+
+  if (type === "Subscription") {
+    await supabase
+      .from("members")
+      .upsert({ email, is_member: true }, { onConflict: "email" });
+  }
+
+  if (type === "Subscription Cancelled" || type === "Subscription Expired") {
+    await supabase
+      .from("members")
+      .update({ is_member: false })
+      .eq("email", email);
+  }
+
+  return new Response("OK", { status: 200 });
 }
-
-const handler = NextAuth({
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
-  ],
-  callbacks: {
-    async signIn({ user }) {
-      const supabase = getSupabase();
-      const { data } = await supabase
-        .from("members")
-        .select("email")
-        .eq("email", user.email)
-        .single();
-
-      if (!data) {
-        await supabase.from("members").insert({
-          email: user.email,
-          is_member: false,
-        });
-      }
-      return true;
-    },
-    async session({ session }) {
-      const supabase = getSupabase();
-      const { data } = await supabase
-        .from("members")
-        .select("is_member")
-        .eq("email", session.user.email)
-        .single();
-
-      session.user.is_member = data?.is_member || false;
-      return session;
-    },
-  },
-});
-
-export { handler as GET, handler as POST };
