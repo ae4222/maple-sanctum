@@ -13,6 +13,17 @@ export async function POST(req: Request) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  // เช็ค is_member
+  const { data: member } = await supabase
+    .from("members")
+    .select("is_member")
+    .eq("email", session.user.email)
+    .single();
+
+  if (!member?.is_member) {
+    return Response.json({ error: "members only" }, { status: 403 });
+  }
+
   const body = await req.json();
 
   const { error } = await supabase.from("garden_members").update({
