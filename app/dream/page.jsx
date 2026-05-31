@@ -579,20 +579,16 @@ export default function DreamPage() {
                     )}
 
                     {/* Dominant symbols */}
-                    {insights.dominant_symbols?.length > 0 && (
-                      <div style={{ marginBottom:20 }}>
-                        <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>RECURRING SYMBOLS</div>
-                        <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-                        {insights.dominant_symbols.map((s, i) => (
-  <div key={i} style={{
-    background:"#ffffff08", border:"1px solid #c9a84c33",
-    borderRadius:20, padding:"8px 18px",
-    color:"#c9a84c", fontFamily:font, fontSize:15, letterSpacing:1,
-    display:"flex", alignItems:"center", gap:8,
-  }}>
-    <span>{s.emoji}</span> {s.name}
-  </div>
-))}
+                    {insights.dominant_symbols.map((s, i) => (
+                      <div key={i} style={{
+                      background:"#ffffff08", border:"1px solid #c9a84c33",
+                      borderRadius:20, padding:"8px 18px",
+                      color:"#c9a84c", fontFamily:font, fontSize:15, letterSpacing:1,
+                      display:"flex", alignItems:"center", gap:8,
+                      }}>
+                        {typeof s === "string" ? s : <><span>{s.emoji}</span> {s.name}</>}
+                       </div>
+                    ))}
                         </div>
                       </div>
                     )}
