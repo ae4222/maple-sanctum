@@ -11,6 +11,7 @@ export async function POST(req) {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     let prompt = "";
+
     if (type === "tarot") {
       prompt = `${MAPLE_PERSONA}
 
@@ -75,6 +76,43 @@ Continue naturally — warm, personal, 2-3 sentences. Like a conversation, not a
         messages: messages,
       });
       return Response.json({ text: msg.content[0].text });
+
+    } else if (type === "dream-insights") {
+      const { dreams, month } = payload;
+
+      const dreamSummaries = dreams.map((d, i) =>
+        `Dream ${i+1}: "${d.dream_text.slice(0, 150)}" — symbols: ${JSON.parse(d.symbols || "[]").map(s => s.symbol).join(", ")}`
+      ).join("\n");
+
+      const insightPrompt = `${MAPLE_PERSONA}
+You are looking at a seeker's dream journal for ${month}.
+
+Here are their dreams this month:
+${dreamSummaries}
+
+Write a monthly insight in this JSON format, no markdown:
+{
+  "summary": "2-3 sentences about the overall theme or energy of this month's dreams",
+  "patterns": ["pattern 1", "pattern 2", "pattern 3"],
+  "dominant_symbols": ["symbol1", "symbol2", "symbol3"],
+  "message": "one closing personal message from Maple to the seeker"
+}`;
+
+      const insightMsg = await client.messages.create({
+        model: "claude-sonnet-4-5",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: insightPrompt }],
+      });
+
+      try {
+        const clean = insightMsg.content[0].text
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
+        return Response.json(JSON.parse(clean));
+      } catch {
+        return Response.json({ summary: insightMsg.content[0].text, patterns: [], dominant_symbols: [], message: "" });
+      }
     }
 
     const msg = await client.messages.create({

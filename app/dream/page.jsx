@@ -109,8 +109,17 @@ export default function DreamPage() {
   const [convoInput, setConvoInput] = useState("");
   const [convoLoading, setConvoLoading] = useState(false);
 
+  // Insights state
+  const [insights, setInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+
   useEffect(() => { setDreamUsed(getDreamUsed()); }, []);
-  useEffect(() => { if (tab === "archive" && session) loadDreams(); }, [tab, session]);
+  useEffect(() => { if ((tab === "archive" || tab === "insights") && session) loadDreams(); }, [tab, session]);
+  useEffect(() => { if (tab === "insights" && isMember && session && dreams.length > 0) loadInsights(); }, [tab, dreams, selectedMonth]);
 
   async function loadDreams() {
     const supabase = getSupabase();
@@ -119,36 +128,68 @@ export default function DreamPage() {
     if (data) setDreams(data);
   }
 
+  async function loadInsights() {
+    setInsightsLoading(true);
+    setInsights(null);
+
+    const [year, month] = selectedMonth.split("-");
+    const monthDreams = dreams.filter(d => {
+      const date = new Date(d.created_at);
+      return date.getFullYear() === parseInt(year) && date.getMonth() + 1 === parseInt(month);
+    });
+
+    if (monthDreams.length === 0) {
+      setInsightsLoading(false);
+      setInsights({ empty: true });
+      return;
+    }
+
+    const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString("en-GB", { month:"long", year:"numeric" });
+
+    const res = await fetch("/api/maple", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "dream-insights",
+        payload: { dreams: monthDreams, month: monthLabel },
+      }),
+    });
+    const data = await res.json();
+    setInsights(data);
+    setInsightsLoading(false);
+  }
+
   async function handleInterpret() {
-  if (!dreamText.trim()) return;
-  if (!isMember && getDreamUsed() >= WEEK_LIMIT) return;
-  setLoading(true);
-  setResult(null);
-  setSaved(false);
-  setConvoMessages([]);
+    if (!dreamText.trim()) return;
+    if (!isMember && getDreamUsed() >= WEEK_LIMIT) return;
+    setLoading(true);
+    setResult(null);
+    setSaved(false);
+    setConvoMessages([]);
 
-  const data = await interpretDream(dreamText);
+    const data = await interpretDream(dreamText);
 
-  if (!isMember) {
-    const next = addDreamUsed();
-    setDreamUsed(next);
+    if (!isMember) {
+      const next = addDreamUsed();
+      setDreamUsed(next);
+    }
+
+    setResult(data);
+    setLoading(false);
+
+    if (data.interpretation) {
+      try {
+        const imgRes = await fetch("/api/dream-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dream: dreamText, symbols: data.symbols }),
+        });
+        const imgData = await imgRes.json();
+        if (imgData.imageUrl) setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }));
+      } catch (e) { console.error("Image gen error:", e); }
+    }
   }
 
-  setResult(data);
-  setLoading(false);
-
-  if (data.interpretation) {
-    try {
-      const imgRes = await fetch("/api/dream-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dream: dreamText, symbols: data.symbols }),
-      });
-      const imgData = await imgRes.json();
-      if (imgData.imageUrl) setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }));
-    } catch (e) { console.error("Image gen error:", e); }
-  }
-}
   async function handleSave() {
     if (!session || !result) return;
     setSaving(true);
@@ -189,6 +230,12 @@ export default function DreamPage() {
     setConvoLoading(false);
   }
 
+  // get available months from dreams
+  const availableMonths = [...new Set(dreams.map(d => {
+    const date = new Date(d.created_at);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  }))].sort().reverse();
+
   const canInterpret = isMember || dreamUsed < WEEK_LIMIT;
 
   return (
@@ -210,10 +257,11 @@ export default function DreamPage() {
           {[
             { key:"journal", label:"✦ Interpret" },
             { key:"archive", label:"📖 Archive" },
+            { key:"insights", label:"🌙 Insights" },
           ].map(t => (
             <button key={t.key} onClick={() => {
               setTab(t.key);
-              if (t.key === "archive") { setResult(null); setSelectedDream(null); }
+              if (t.key !== "journal") { setResult(null); setSelectedDream(null); }
             }} style={{
               flex:1, padding:"14px", border:"none", cursor:"pointer",
               background: tab === t.key ? "#c9a84c18" : "transparent",
@@ -300,7 +348,6 @@ export default function DreamPage() {
                   </div>
                 )}
 
-                {/* Dream Conversation */}
                 <div style={{ marginBottom:24 }}>
                   <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>ASK MAPLE</div>
                   {convoMessages.map((m, i) => (
@@ -389,27 +436,22 @@ export default function DreamPage() {
                   background:"none", border:"none", color:"#8b7355",
                   cursor:"pointer", marginBottom:24, fontSize:16, fontFamily:font,
                 }}>← Back to archive</button>
-
                 <div style={{ fontSize:12, color:"#8b7355", letterSpacing:2, marginBottom:16 }}>
                   {new Date(selectedDream.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric", timeZone:"UTC" })}
                 </div>
-
                 {selectedDream.image_url && (
                   <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
                     <img src={selectedDream.image_url} alt="dream illustration" style={{ width:"100%", height:"auto", display:"block" }}/>
                   </div>
                 )}
-
                 <div style={{ background:"#ffffff06", border:"1px solid #c9a84c22", borderRadius:14, padding:22, marginBottom:20 }}>
                   <div style={{ fontSize:12, color:"#8b7355", letterSpacing:2, marginBottom:10 }}>THE DREAM</div>
                   <p style={{ fontSize:16, color:"#c9b994aa", lineHeight:1.8, margin:0, fontFamily:font }}>{selectedDream.dream_text}</p>
                 </div>
-
                 <div style={{ background:"#ffffff06", border:"1px solid #c9a84c33", borderRadius:14, padding:22, marginBottom:20 }}>
                   <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>MAPLE READS</div>
                   <p style={{ fontSize:17, color:"#e8d5c4", lineHeight:2, margin:0, fontFamily:font }}>{selectedDream.interpretation}</p>
                 </div>
-
                 {(() => {
                   const symbols = JSON.parse(selectedDream.symbols || "[]");
                   return symbols.length > 0 && (
@@ -421,7 +463,6 @@ export default function DreamPage() {
                     </div>
                   );
                 })()}
-
                 {selectedDream.note && (
                   <div style={{ textAlign:"center", fontStyle:"italic", fontSize:16, color:"#c9b994aa", fontFamily:font, paddingTop:16, borderTop:"1px solid #c9a84c22" }}>
                     "{selectedDream.note}"
@@ -445,6 +486,135 @@ export default function DreamPage() {
           </div>
         )}
 
+        {tab === "insights" && (
+          <div>
+            {!isMember ? (
+              <div style={{ textAlign:"center", padding:"48px 24px", border:"1px solid #c9a84c22", borderRadius:16 }}>
+                <div style={{ fontSize:40, marginBottom:16 }}>🌙</div>
+                <div style={{ fontSize:22, color:"#c9a84c", marginBottom:12, fontFamily:font, letterSpacing:2 }}>Coven Members Only</div>
+                <div style={{ fontSize:16, color:"#8b7355", fontFamily:font, lineHeight:1.8, marginBottom:24 }}>
+                  Monthly dream insights are available to Coven members.<br/>
+                  Maple will read the patterns in your dreams.
+                </div>
+                <a href="https://ko-fi.com/witchgarden/tiers" target="_blank" rel="noreferrer" style={{
+                  display:"inline-block", background:"#c9a84c", color:"#1a0800",
+                  borderRadius:10, padding:"12px 28px", fontFamily:font, fontSize:16,
+                  textDecoration:"none", letterSpacing:1,
+                }}>✦ Join the Coven</a>
+              </div>
+            ) : !session ? (
+              <div style={{ textAlign:"center", padding:"48px 24px" }}>
+                <button onClick={() => signIn("google")} style={{
+                  background:"#c9a84c", color:"#1a0800", border:"none",
+                  borderRadius:10, padding:"12px 28px", cursor:"pointer", fontFamily:font, fontSize:16,
+                }}>Login to view insights</button>
+              </div>
+            ) : (
+              <div>
+                {/* Month selector */}
+                <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:28 }}>
+                  <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3 }}>MONTH</div>
+                  <select
+                    value={selectedMonth}
+                    onChange={e => { setSelectedMonth(e.target.value); setInsights(null); }}
+                    style={{
+                      background:"#ffffff08", border:"1px solid #c9a84c44",
+                      borderRadius:8, padding:"8px 14px", color:"#e8d5c4",
+                      fontFamily:font, fontSize:15, outline:"none", cursor:"pointer",
+                    }}
+                  >
+                    {availableMonths.length > 0 ? availableMonths.map(m => {
+                      const [y, mo] = m.split("-");
+                      const label = new Date(parseInt(y), parseInt(mo) - 1).toLocaleDateString("en-GB", { month:"long", year:"numeric" });
+                      return <option key={m} value={m} style={{ background:"#1a0a2e" }}>{label}</option>;
+                    }) : <option value={selectedMonth} style={{ background:"#1a0a2e" }}>This month</option>}
+                  </select>
+                  <button onClick={loadInsights} disabled={insightsLoading} style={{
+                    background:"none", border:"1px solid #c9a84c44", color:"#c9a84c",
+                    borderRadius:8, padding:"8px 14px", cursor:"pointer", fontFamily:font, fontSize:14,
+                  }}>
+                    {insightsLoading ? "Reading..." : "↺ Refresh"}
+                  </button>
+                </div>
+
+                {insightsLoading && (
+                  <div style={{ textAlign:"center", color:"#c9a84c88", fontSize:18, fontStyle:"italic", padding:"48px 0" }}>
+                    Maple reads the patterns in your dreams...
+                  </div>
+                )}
+
+                {insights?.empty && (
+                  <div style={{ textAlign:"center", color:"#8b7355", fontSize:16, fontFamily:font, padding:"48px 0" }}>
+                    No dreams recorded this month yet.
+                  </div>
+                )}
+
+                {insights && !insights.empty && !insightsLoading && (
+                  <div style={{ animation:"fadeUp .6s both" }}>
+                    {/* Summary */}
+                    <div style={{ background:"#ffffff06", border:"1px solid #c9a84c33", borderRadius:16, padding:28, marginBottom:20 }}>
+                      <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>MAPLE READS THIS MONTH</div>
+                      <p style={{ lineHeight:2, fontSize:18, margin:0, color:"#e8d5c4", fontFamily:font }}>{insights.summary}</p>
+                    </div>
+
+                    {/* Patterns */}
+                    {insights.patterns?.length > 0 && (
+                      <div style={{ marginBottom:20 }}>
+                        <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>PATTERNS</div>
+                        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                          {insights.patterns.map((p, i) => (
+                            <div key={i} style={{
+                              background:"#ffffff06", border:"1px solid #c9a84c22",
+                              borderRadius:10, padding:"12px 18px",
+                              color:"#e8d5c4", fontFamily:font, fontSize:16, lineHeight:1.7,
+                              display:"flex", gap:10, alignItems:"flex-start",
+                            }}>
+                              <span style={{ color:"#c9a84c" }}>✦</span> {p}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Dominant symbols */}
+                    {insights.dominant_symbols?.length > 0 && (
+                      <div style={{ marginBottom:20 }}>
+                        <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>RECURRING SYMBOLS</div>
+                        <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+                          {insights.dominant_symbols.map((s, i) => (
+                            <div key={i} style={{
+                              background:"#ffffff08", border:"1px solid #c9a84c33",
+                              borderRadius:20, padding:"8px 18px",
+                              color:"#c9a84c", fontFamily:font, fontSize:15, letterSpacing:1,
+                            }}>{s}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Closing message */}
+                    {insights.message && (
+                      <div style={{ borderTop:"1px solid #c9a84c22", paddingTop:20, textAlign:"center", fontStyle:"italic", fontSize:17, color:"#c9b994aa", fontFamily:font }}>
+                        "{insights.message}"
+                      </div>
+                    )}
+
+                    {/* Print button */}
+                    <button onClick={() => window.print()} style={{
+                      width:"100%", marginTop:24, padding:"14px",
+                      background:"none", border:"1px solid #c9a84c33",
+                      borderRadius:12, color:"#8b7355",
+                      fontFamily:font, fontSize:15, letterSpacing:2, cursor:"pointer",
+                    }}>
+                      ↓ Print / Save as PDF
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
       <style>{`
@@ -452,6 +622,10 @@ export default function DreamPage() {
         * { box-sizing:border-box; }
         textarea::placeholder { color:#8b735566; }
         textarea:focus { border-color:#c9a84c88 !important; }
+        @media print {
+          button { display:none !important; }
+          body { background:#fff; color:#000; }
+        }
       `}</style>
     </div>
   );
