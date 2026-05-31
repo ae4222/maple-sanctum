@@ -586,7 +586,7 @@ export default function DreamPage() {
                       color:"#c9a84c", fontFamily:font, fontSize:15, letterSpacing:1,
                       display:"flex", alignItems:"center", gap:8,
                       }}>
-                        {typeof s === "string" ? s : <><span>{s.emoji}</span> {s.name}</>}
+                        {typeof s === "string" ? s : (<><span>{s.emoji}</span>{" "}{s.name}</>)}
                        </div>
                     ))}
                         </div>
