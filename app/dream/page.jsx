@@ -597,6 +597,11 @@ export default function DreamPage() {
 )}
 
 {/* Closing message */}
+{insights.message && (
+  <div style={{ borderTop:"1px solid #c9a84c22", paddingTop:20, marginBottom:24, textAlign:"center", fontStyle:"italic", fontSize:17, color:"#c9b994aa", fontFamily:font }}>
+    "{insights.message}"
+  </div>
+)}
 
                     {/* Print button */}
                     <button onClick={() => window.print()} style={{

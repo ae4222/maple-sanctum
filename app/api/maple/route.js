@@ -90,11 +90,16 @@ You are looking at a seeker's dream journal for ${month}.
 Here are their dreams this month:
 ${dreamSummaries}
 
-Write a monthly insight in this JSON format, no markdown:
+Write a monthly insight in this JSON format, no markdown.
+Each dominant_symbol MUST be an object with "name" and "emoji" fields. Never use plain strings.
 {
   "summary": "2-3 sentences about the overall theme or energy of this month's dreams",
   "patterns": ["pattern 1", "pattern 2", "pattern 3"],
-  "dominant_symbols": ["symbol1", "symbol2", "symbol3"],
+  "dominant_symbols": [
+    { "name": "Deep Forest", "emoji": "🌲" },
+    { "name": "Water", "emoji": "🌊" },
+    { "name": "Solitude", "emoji": "🌙" }
+  ],
   "message": "one closing personal message from Maple to the seeker"
 }`;
 
