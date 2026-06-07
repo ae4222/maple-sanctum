@@ -108,7 +108,7 @@ export default function DreamPage() {
   const [convoMessages, setConvoMessages] = useState([]);
   const [convoInput, setConvoInput] = useState("");
   const [convoLoading, setConvoLoading] = useState(false);
-
+  const [insightImageUrl, setInsightImageUrl] = useState(null);
   // Insights state
   const [insights, setInsights] = useState(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
@@ -130,36 +130,50 @@ export default function DreamPage() {
     if (data) setDreams(data);
   }
 
-  async function loadInsights() {
-    setInsightsLoading(true);
-    setInsights(null);
+async function loadInsights() {
+  setInsightsLoading(true);
+  setInsights(null);
+  setInsightImageUrl(null);
 
-    const [year, month] = selectedMonth.split("-");
-    const monthDreams = dreams.filter(d => {
-      const date = new Date(d.created_at);
-      return date.getFullYear() === parseInt(year) && date.getMonth() + 1 === parseInt(month);
-    });
+  const [year, month] = selectedMonth.split("-");
+  const monthDreams = dreams.filter(d => {
+    const date = new Date(d.created_at);
+    return date.getFullYear() === parseInt(year) && date.getMonth() + 1 === parseInt(month);
+  });
 
-    if (monthDreams.length === 0) {
-      setInsightsLoading(false);
-      setInsights({ empty: true });
-      return;
-    }
-
-    const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString("en-GB", { month:"long", year:"numeric" });
-
-    const res = await fetch("/api/maple", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "dream-insights",
-        payload: { dreams: monthDreams, month: monthLabel },
-      }),
-    });
-    const data = await res.json();
-    setInsights(data);
+  if (monthDreams.length === 0) {
     setInsightsLoading(false);
+    setInsights({ empty: true });
+    return;
   }
+
+  const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString("en-GB", { month:"long", year:"numeric" });
+
+  const res = await fetch("/api/maple", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "dream-insights",
+      payload: { dreams: monthDreams, month: monthLabel },
+    }),
+  });
+  const data = await res.json();
+  setInsights(data);
+  setInsightsLoading(false);
+
+  // gen image
+  const imgRes = await fetch("/api/insight-image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      summary: data.summary,
+      dominant_symbols: data.dominant_symbols,
+      patterns: data.patterns,
+    }),
+  });
+  const imgData = await imgRes.json();
+  if (imgData.imageUrl) setInsightImageUrl(imgData.imageUrl);
+}
 
   async function handleInterpret() {
     if (!dreamText.trim()) return;
@@ -518,7 +532,7 @@ export default function DreamPage() {
                   <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3 }}>MONTH</div>
                   <select
                     value={selectedMonth}
-                    onChange={e => { setSelectedMonth(e.target.value); setInsights(null); }}
+                    onChange={e => { setSelectedMonth(e.target.value); setInsights(null); setInsightImageUrl(null); }}
                     style={{
                       background:"#ffffff08", border:"1px solid #c9a84c44",
                       borderRadius:8, padding:"8px 14px", color:"#e8d5c4",
@@ -558,7 +572,12 @@ export default function DreamPage() {
                       <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>MAPLE READS THIS MONTH</div>
                       <p style={{ lineHeight:2, fontSize:18, margin:0, color:"#e8d5c4", fontFamily:font }}>{insights.summary}</p>
                     </div>
-
+                    {/* Insight Image */}
+                    {insightImageUrl && (
+                      <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
+                        <img src={insightImageUrl} alt="monthly dream illustration" style={{ width:"100%", height:"auto", display:"block" }}/>
+                      </div>
+                    )}
                     {/* Patterns */}
                     {insights.patterns?.length > 0 && (
                       <div style={{ marginBottom:20 }}>
