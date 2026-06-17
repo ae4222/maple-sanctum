@@ -89,6 +89,7 @@ Continue naturally — warm, poetic, personal, 2-3 sentences. Like a real conver
       ).join("\n");
 
       const insightPrompt = `${MAPLE_PERSONA}
+IMPORTANT: For this response, do NOT use a narrative opening or italics. Respond with ONLY the raw JSON object below — no scene-setting, no markdown, no extra text before or after.
 You are looking at a seeker's dream journal for ${month}.
 
 Here are their dreams this month:
