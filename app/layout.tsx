@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { SessionProvider } from "next-auth/react";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -10,6 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionProvider>
           {children}
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
