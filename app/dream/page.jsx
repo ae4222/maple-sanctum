@@ -100,6 +100,7 @@ export default function DreamPage() {
   const [dreamText, setDreamText] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false); // NEW: tracks dream-image fetch in flight
   const [dreamUsed, setDreamUsed] = useState(0);
   const [dreams, setDreams] = useState([]);
   const [selectedDream, setSelectedDream] = useState(null);
@@ -194,6 +195,7 @@ async function loadInsights() {
     setLoading(false);
 
     if (data.interpretation) {
+      setImageLoading(true); // NEW: block save until image finishes (or fails)
       try {
         const imgRes = await fetch("/api/dream-image", {
           method: "POST",
@@ -202,12 +204,17 @@ async function loadInsights() {
         });
         const imgData = await imgRes.json();
         if (imgData.imageUrl) setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }));
-      } catch (e) { console.error("Image gen error:", e); }
+      } catch (e) {
+        console.error("Image gen error:", e);
+      } finally {
+        setImageLoading(false); // NEW
+      }
     }
   }
 
   async function handleSave() {
     if (!session || !result) return;
+    if (imageLoading) return; // NEW: guard against saving before image arrives
     setSaving(true);
     const supabase = getSupabase();
     await supabase.from("dreams").insert({
@@ -338,11 +345,20 @@ async function loadInsights() {
 
             {result && (
               <div style={{ animation:"fadeUp .6s both" }}>
-                {result.imageUrl && (
+                {result.imageUrl ? (
                   <div style={{ marginBottom:20, borderRadius:16, overflow:"hidden", border:"1px solid #c9a84c22" }}>
                     <img src={result.imageUrl} alt="dream illustration" style={{ width:"100%", height:"auto", display:"block" }}/>
                   </div>
-                )}
+                ) : imageLoading ? (
+                  // NEW: placeholder while the image is being generated/uploaded
+                  <div style={{
+                    marginBottom:20, borderRadius:16, border:"1px solid #c9a84c22",
+                    padding:"32px", textAlign:"center", color:"#8b7355",
+                    fontFamily:font, fontStyle:"italic", fontSize:15,
+                  }}>
+                    ✦ conjuring an image from your dream...
+                  </div>
+                ) : null}
 
                 <div style={{ background:"#ffffff06", border:"1px solid #c9a84c33", borderRadius:16, padding:28, marginBottom:20 }}>
                   <div style={{ fontSize:12, color:"#c9a84c", letterSpacing:3, marginBottom:14 }}>MAPLE READS</div>
@@ -410,11 +426,13 @@ async function loadInsights() {
                 </div>
 
                 {session && !saved && (
-                  <button onClick={handleSave} disabled={saving} style={{
+                  <button onClick={handleSave} disabled={saving || imageLoading} style={{
                     width:"100%", padding:"14px", background:"none", border:"1px solid #c9a84c55",
-                    borderRadius:12, color:"#c9a84c", fontFamily:font, fontSize:16, letterSpacing:2, cursor:"pointer",
+                    borderRadius:12, color:"#c9a84c", fontFamily:font, fontSize:16, letterSpacing:2,
+                    cursor: (saving || imageLoading) ? "not-allowed" : "pointer",
+                    opacity: imageLoading ? 0.5 : 1,
                   }}>
-                    {saving ? "Saving..." : "✦ Save to Archive"}
+                    {imageLoading ? "Waiting for image..." : saving ? "Saving..." : "✦ Save to Archive"}
                   </button>
                 )}
                 {saved && (
