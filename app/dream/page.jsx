@@ -163,18 +163,40 @@ async function loadInsights() {
   setInsights(data);
   setInsightsLoading(false);
 
-  // gen image
-  const imgRes = await fetch("/api/insight-image", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      summary: data.summary,
-      dominant_symbols: data.dominant_symbols,
-      patterns: data.patterns,
-    }),
-  });
-  const imgData = await imgRes.json();
-  if (imgData.imageUrl) setInsightImageUrl(imgData.imageUrl);
+  // gen image (async polling)
+  try {
+    const startRes = await fetch("/api/insight-image/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        summary: data.summary,
+        dominant_symbols: data.dominant_symbols,
+        patterns: data.patterns,
+      }),
+    });
+    const startData = await startRes.json();
+
+    if (!startData.predictionId) {
+      throw new Error(startData.detail || "failed to start insight image");
+    }
+
+    for (let i = 0; i < 24; i++) {
+      await new Promise(r => setTimeout(r, 2500));
+      const statusRes = await fetch(`/api/insight-image/status?id=${startData.predictionId}`);
+      const statusData = await statusRes.json();
+
+      if (statusData.status === "succeeded" && statusData.imageUrl) {
+        setInsightImageUrl(statusData.imageUrl);
+        break;
+      }
+      if (statusData.status === "failed" || statusData.status === "canceled") {
+        console.error("Insight image generation failed:", statusData.error);
+        break;
+      }
+    }
+  } catch (e) {
+    console.error("Insight image gen error:", e);
+  }
 }
 
   async function handleInterpret() {
