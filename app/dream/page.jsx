@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { createClient } from "@supabase/supabase-js";
@@ -195,19 +196,44 @@ async function loadInsights() {
     setLoading(false);
 
     if (data.interpretation) {
-      setImageLoading(true); // NEW: block save until image finishes (or fails)
+      setImageLoading(true);
       try {
-        const imgRes = await fetch("/api/dream-image", {
+        // ขั้นที่ 1: สั่งสร้างภาพ (ไม่รอให้เสร็จ)
+        const startRes = await fetch("/api/dream-image/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ dream: dreamText, symbols: data.symbols }),
         });
-        const imgData = await imgRes.json();
-        if (imgData.imageUrl) setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }));
+        const startData = await startRes.json();
+
+        if (!startData.predictionId) {
+          throw new Error(startData.detail || "failed to start image generation");
+        }
+
+        // ขั้นที่ 2: poll สถานะทุก 2.5 วิ สูงสุด 24 ครั้ง (~60 วิ)
+        let finalImageUrl = null;
+        for (let i = 0; i < 24; i++) {
+          await new Promise(r => setTimeout(r, 2500));
+          const statusRes = await fetch(`/api/dream-image/status?id=${startData.predictionId}`);
+          const statusData = await statusRes.json();
+
+          if (statusData.status === "succeeded" && statusData.imageUrl) {
+            finalImageUrl = statusData.imageUrl;
+            break;
+          }
+          if (statusData.status === "failed" || statusData.status === "canceled") {
+            console.error("Image generation failed:", statusData.error);
+            break;
+          }
+        }
+
+        if (finalImageUrl) {
+          setResult(prev => ({ ...prev, imageUrl: finalImageUrl }));
+        }
       } catch (e) {
         console.error("Image gen error:", e);
       } finally {
-        setImageLoading(false); // NEW
+        setImageLoading(false);
       }
     }
   }
